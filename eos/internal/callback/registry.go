@@ -4,6 +4,7 @@ import (
 	"context"
 	"runtime/cgo"
 	"sync"
+	"sync/atomic"
 )
 
 type OneShotResult struct {
@@ -14,6 +15,7 @@ type OneShotResult struct {
 type OneShotCallback struct {
 	resultCh chan OneShotResult
 	handle   cgo.Handle
+	deleted  atomic.Bool
 }
 
 func NewOneShot() *OneShotCallback {
@@ -48,13 +50,19 @@ func (c *OneShotCallback) Complete(result OneShotResult) {
 	c.resultCh <- result
 }
 
+// Delete frees the cgo.Handle. Safe to call multiple times.
 func (c *OneShotCallback) Delete() {
-	c.handle.Delete()
+	if c.deleted.CompareAndSwap(false, true) {
+		c.handle.Delete()
+	}
 }
 
+// CompleteByHandle completes the oneshot callback identified by handle
+// and frees the handle. Called from C callback trampolines.
 func CompleteByHandle(handle cgo.Handle, result OneShotResult) {
 	cb := handle.Value().(*OneShotCallback)
 	cb.Complete(result)
+	cb.Delete()
 }
 
 type NotifyFunc func(data any)

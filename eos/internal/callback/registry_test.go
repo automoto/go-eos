@@ -40,6 +40,12 @@ func Test_oneshot_delete_should_not_panic(t *testing.T) {
 	assert.NotPanics(t, func() { cb.Delete() })
 }
 
+func Test_oneshot_double_delete_should_not_panic(t *testing.T) {
+	cb := NewOneShot()
+	cb.Delete()
+	assert.NotPanics(t, func() { cb.Delete() })
+}
+
 func Test_complete_by_handle_should_dispatch_to_oneshot(t *testing.T) {
 	cb := NewOneShot()
 	defer cb.Delete()

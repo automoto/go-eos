@@ -3,7 +3,6 @@
 package cbinding
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../../static/EOS-SDK-49960398-Release-v1.19.0.3/SDK/Include
 #include "eos_sdk.h"
 #include "eos_logging.h"
 */

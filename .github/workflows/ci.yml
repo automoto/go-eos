@@ -26,3 +26,12 @@ jobs:
       - uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+
+  lint-c:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Check C formatting
+        run: make lint-c

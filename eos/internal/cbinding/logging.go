@@ -3,21 +3,9 @@
 package cbinding
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../../static/EOS-SDK-49960398-Release-v1.19.0.3/SDK/Include
-
+#include "logging_wrapper.h"
 #include "eos_sdk.h"
 #include "eos_logging.h"
-
-// Trampoline implemented in logging_callback.go via Cgo export
-extern void goEOSLogCallback(EOS_LogMessage* Message);
-
-static void eosLogCallbackTrampoline(const EOS_LogMessage* Message) {
-    goEOSLogCallback((EOS_LogMessage*)Message);
-}
-
-static EOS_EResult eos_logging_set_callback() {
-    return EOS_Logging_SetCallback((EOS_LogMessageFunc)&eosLogCallbackTrampoline);
-}
 */
 import "C"
 

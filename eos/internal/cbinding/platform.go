@@ -3,64 +3,9 @@
 package cbinding
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../../static/EOS-SDK-49960398-Release-v1.19.0.3/SDK/Include
-#cgo darwin LDFLAGS: -L${SRCDIR}/../../../static/EOS-SDK-49960398-Release-v1.19.0.3/SDK/Bin -lEOSSDK-Mac-Shipping -Wl,-rpath,${SRCDIR}/../../../static/EOS-SDK-49960398-Release-v1.19.0.3/SDK/Bin
-#cgo linux LDFLAGS: -L${SRCDIR}/../../../static/EOS-SDK-49960398-Release-v1.19.0.3/SDK/Bin -lEOSSDK-Linux-Shipping -Wl,-rpath,${SRCDIR}/../../../static/EOS-SDK-49960398-Release-v1.19.0.3/SDK/Bin
-
+#include "platform_wrapper.h"
 #include "eos_sdk.h"
-#include "eos_init.h"
-#include "eos_logging.h"
 #include <stdlib.h>
-#include <stdint.h>
-
-static EOS_EResult eos_initialize(const char* productName, const char* productVersion) {
-    EOS_InitializeOptions opts = {0};
-    opts.ApiVersion = EOS_INITIALIZE_API_LATEST;
-    opts.ProductName = productName;
-    opts.ProductVersion = productVersion;
-    return EOS_Initialize(&opts);
-}
-
-static uintptr_t eos_platform_create(const char* productId, const char* sandboxId,
-    const char* deploymentId, const char* clientId, const char* clientSecret) {
-    EOS_Platform_Options opts = {0};
-    opts.ApiVersion = EOS_PLATFORM_OPTIONS_API_LATEST;
-    opts.ProductId = productId;
-    opts.SandboxId = sandboxId;
-    opts.DeploymentId = deploymentId;
-    opts.ClientCredentials.ClientId = clientId;
-    opts.ClientCredentials.ClientSecret = clientSecret;
-    opts.bIsServer = EOS_FALSE;
-    return (uintptr_t)EOS_Platform_Create(&opts);
-}
-
-static void eos_platform_tick(uintptr_t handle) {
-    EOS_Platform_Tick((EOS_HPlatform)handle);
-}
-
-static void eos_platform_release(uintptr_t handle) {
-    EOS_Platform_Release((EOS_HPlatform)handle);
-}
-
-static uintptr_t eos_platform_get_auth(uintptr_t handle) {
-    return (uintptr_t)EOS_Platform_GetAuthInterface((EOS_HPlatform)handle);
-}
-
-static uintptr_t eos_platform_get_connect(uintptr_t handle) {
-    return (uintptr_t)EOS_Platform_GetConnectInterface((EOS_HPlatform)handle);
-}
-
-static uintptr_t eos_platform_get_lobby(uintptr_t handle) {
-    return (uintptr_t)EOS_Platform_GetLobbyInterface((EOS_HPlatform)handle);
-}
-
-static uintptr_t eos_platform_get_sessions(uintptr_t handle) {
-    return (uintptr_t)EOS_Platform_GetSessionsInterface((EOS_HPlatform)handle);
-}
-
-static uintptr_t eos_platform_get_p2p(uintptr_t handle) {
-    return (uintptr_t)EOS_Platform_GetP2PInterface((EOS_HPlatform)handle);
-}
 */
 import "C"
 import "unsafe"

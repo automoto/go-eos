@@ -98,13 +98,13 @@ func Test_run_should_shutdown_on_context_cancel(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func Test_interface_accessors_should_return_non_zero_handles(t *testing.T) {
+func Test_interface_accessors_should_return_non_nil(t *testing.T) {
 	p, err := Initialize(validConfig())
 	assert.NoError(t, err)
 	defer p.Shutdown()
 
-	assert.NotEqual(t, cbinding.EOS_HAuth(0), p.Auth())
-	assert.NotEqual(t, cbinding.EOS_HConnect(0), p.Connect())
+	assert.NotNil(t, p.Auth())
+	assert.NotNil(t, p.Connect())
 	assert.NotEqual(t, cbinding.EOS_HLobby(0), p.Lobby())
 	assert.NotEqual(t, cbinding.EOS_HSessions(0), p.Sessions())
 	assert.NotEqual(t, cbinding.EOS_HP2P(0), p.P2P())
