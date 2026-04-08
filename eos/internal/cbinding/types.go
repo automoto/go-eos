@@ -16,9 +16,10 @@ const (
 	EOS_EResult_Success         EOS_EResult = 0
 	EOS_EResult_NoConnection    EOS_EResult = 1
 	EOS_EResult_InvalidAuth     EOS_EResult = 4
-	EOS_EResult_NotFound        EOS_EResult = 16
-	EOS_EResult_TooManyRequests EOS_EResult = 30
-	EOS_EResult_UnexpectedError EOS_EResult = 1001
+	EOS_EResult_TooManyRequests EOS_EResult = 8
+	EOS_EResult_AlreadyPending  EOS_EResult = 9
+	EOS_EResult_NotFound        EOS_EResult = 18
+	EOS_EResult_UnexpectedError EOS_EResult = 0x7FFFFFFF
 )
 
 type EOS_EpicAccountId uintptr
@@ -35,10 +36,10 @@ const (
 type EOS_ELogCategory int32
 
 const (
-	EOS_LC_Core     EOS_ELogCategory = 0
-	EOS_LC_Auth     EOS_ELogCategory = 1
-	EOS_LC_Friends  EOS_ELogCategory = 2
-	EOS_LC_Presence EOS_ELogCategory = 3
+	EOS_LC_Core          EOS_ELogCategory = 0
+	EOS_LC_Auth          EOS_ELogCategory = 1
+	EOS_LC_Friends       EOS_ELogCategory = 2
+	EOS_LC_Presence      EOS_ELogCategory = 3
 	EOS_LC_AllCategories EOS_ELogCategory = 0x7FFFFFFF
 )
 

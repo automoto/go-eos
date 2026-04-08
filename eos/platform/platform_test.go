@@ -1,3 +1,5 @@
+//go:build eosstub
+
 package platform
 
 import (
