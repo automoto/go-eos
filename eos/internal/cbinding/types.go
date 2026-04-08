@@ -57,6 +57,102 @@ const (
 	EOS_LS_LoggedIn          EOS_ELoginStatus = 2
 )
 
+// Lobby/Sessions handle types
+
+type EOS_HLobbyModification uintptr
+type EOS_HLobbySearch uintptr
+type EOS_HLobbyDetails uintptr
+type EOS_HSessionModification uintptr
+type EOS_HSessionSearch uintptr
+type EOS_HSessionDetails uintptr
+type EOS_HActiveSession uintptr
+
+// Lobby enums
+
+type EOS_ELobbyPermissionLevel int32
+
+const (
+	EOS_LPL_PublicAdvertised EOS_ELobbyPermissionLevel = 0
+	EOS_LPL_JoinViaPresence EOS_ELobbyPermissionLevel = 1
+	EOS_LPL_InviteOnly      EOS_ELobbyPermissionLevel = 2
+)
+
+type EOS_ELobbyAttributeVisibility int32
+
+const (
+	EOS_LAT_Public  EOS_ELobbyAttributeVisibility = 0
+	EOS_LAT_Private EOS_ELobbyAttributeVisibility = 1
+)
+
+type EOS_ELobbyMemberStatus int32
+
+const (
+	EOS_LMS_Joined       EOS_ELobbyMemberStatus = 0
+	EOS_LMS_Left         EOS_ELobbyMemberStatus = 1
+	EOS_LMS_Disconnected EOS_ELobbyMemberStatus = 2
+	EOS_LMS_Kicked       EOS_ELobbyMemberStatus = 3
+	EOS_LMS_Promoted     EOS_ELobbyMemberStatus = 4
+	EOS_LMS_Closed       EOS_ELobbyMemberStatus = 5
+)
+
+// Sessions enums
+
+type EOS_EOnlineSessionState int32
+
+const (
+	EOS_OSS_NoSession  EOS_EOnlineSessionState = 0
+	EOS_OSS_Creating   EOS_EOnlineSessionState = 1
+	EOS_OSS_Pending    EOS_EOnlineSessionState = 2
+	EOS_OSS_Starting   EOS_EOnlineSessionState = 3
+	EOS_OSS_InProgress EOS_EOnlineSessionState = 4
+	EOS_OSS_Ending     EOS_EOnlineSessionState = 5
+	EOS_OSS_Ended      EOS_EOnlineSessionState = 6
+	EOS_OSS_Destroying EOS_EOnlineSessionState = 7
+)
+
+type EOS_EOnlineSessionPermissionLevel int32
+
+const (
+	EOS_OSPF_PublicAdvertised EOS_EOnlineSessionPermissionLevel = 0
+	EOS_OSPF_JoinViaPresence EOS_EOnlineSessionPermissionLevel = 1
+	EOS_OSPF_InviteOnly      EOS_EOnlineSessionPermissionLevel = 2
+)
+
+type EOS_ESessionAttributeAdvertisementType int32
+
+const (
+	EOS_SAAT_DontAdvertise EOS_ESessionAttributeAdvertisementType = 0
+	EOS_SAAT_Advertise     EOS_ESessionAttributeAdvertisementType = 1
+)
+
+// Shared enums (used by both lobby and sessions)
+
+type EOS_EComparisonOp int32
+
+const (
+	EOS_CO_Equal              EOS_EComparisonOp = 0
+	EOS_CO_NotEqual           EOS_EComparisonOp = 1
+	EOS_CO_GreaterThan        EOS_EComparisonOp = 2
+	EOS_CO_GreaterThanOrEqual EOS_EComparisonOp = 3
+	EOS_CO_LessThan           EOS_EComparisonOp = 4
+	EOS_CO_LessThanOrEqual    EOS_EComparisonOp = 5
+	EOS_CO_Distance           EOS_EComparisonOp = 6
+	EOS_CO_AnyOf              EOS_EComparisonOp = 7
+	EOS_CO_NotAnyOf           EOS_EComparisonOp = 8
+	EOS_CO_OneOf              EOS_EComparisonOp = 9
+	EOS_CO_NotOneOf           EOS_EComparisonOp = 10
+	EOS_CO_Contains           EOS_EComparisonOp = 11
+)
+
+type EOS_EAttributeType int32
+
+const (
+	EOS_AT_Boolean EOS_EAttributeType = 0
+	EOS_AT_Int64   EOS_EAttributeType = 1
+	EOS_AT_Double  EOS_EAttributeType = 2
+	EOS_AT_String  EOS_EAttributeType = 3
+)
+
 type EOS_ELogLevel int32
 
 const (

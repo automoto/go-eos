@@ -105,8 +105,8 @@ func Test_interface_accessors_should_return_non_nil(t *testing.T) {
 
 	assert.NotNil(t, p.Auth())
 	assert.NotNil(t, p.Connect())
-	assert.NotEqual(t, cbinding.EOS_HLobby(0), p.Lobby())
-	assert.NotEqual(t, cbinding.EOS_HSessions(0), p.Sessions())
+	assert.NotNil(t, p.Lobby())
+	assert.NotNil(t, p.Sessions())
 	assert.NotEqual(t, cbinding.EOS_HP2P(0), p.P2P())
 }
 

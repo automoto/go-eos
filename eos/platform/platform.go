@@ -10,17 +10,19 @@ import (
 	"github.com/mydev/go-eos/eos/internal/callback"
 	"github.com/mydev/go-eos/eos/internal/cbinding"
 	"github.com/mydev/go-eos/eos/internal/threadworker"
+	"github.com/mydev/go-eos/eos/lobby"
+	"github.com/mydev/go-eos/eos/sessions"
 )
 
 type Platform struct {
 	handle         cbinding.EOS_HPlatform
 	worker         *threadworker.Worker
 	notify         *callback.NotificationRegistry
-	auth           *auth.Auth
-	connect        *connect.Connect
-	lobbyHandle    cbinding.EOS_HLobby
-	sessionsHandle cbinding.EOS_HSessions
-	p2pHandle      cbinding.EOS_HP2P
+	auth     *auth.Auth
+	connect  *connect.Connect
+	lobby    *lobby.Lobby
+	sessions *sessions.Sessions
+	p2pHandle cbinding.EOS_HP2P
 }
 
 func Initialize(cfg PlatformConfig) (*Platform, error) {
@@ -59,11 +61,11 @@ func Initialize(cfg PlatformConfig) (*Platform, error) {
 		handle:         handle,
 		worker:         worker,
 		notify:         callback.NewNotificationRegistry(),
-		auth:           auth.New(cbinding.EOS_Platform_GetAuthInterface(handle), worker),
-		connect:        connect.New(cbinding.EOS_Platform_GetConnectInterface(handle), worker),
-		lobbyHandle:    cbinding.EOS_Platform_GetLobbyInterface(handle),
-		sessionsHandle: cbinding.EOS_Platform_GetSessionsInterface(handle),
-		p2pHandle:      cbinding.EOS_Platform_GetP2PInterface(handle),
+		auth:     auth.New(cbinding.EOS_Platform_GetAuthInterface(handle), worker),
+		connect:  connect.New(cbinding.EOS_Platform_GetConnectInterface(handle), worker),
+		lobby:    lobby.New(cbinding.EOS_Platform_GetLobbyInterface(handle), worker),
+		sessions: sessions.New(cbinding.EOS_Platform_GetSessionsInterface(handle), worker),
+		p2pHandle: cbinding.EOS_Platform_GetP2PInterface(handle),
 	}
 
 	return p, nil
@@ -76,11 +78,11 @@ func (p *Platform) Shutdown() error {
 	return nil
 }
 
-func (p *Platform) Auth() *auth.Auth            { return p.auth }
-func (p *Platform) Connect() *connect.Connect   { return p.connect }
-func (p *Platform) Lobby() cbinding.EOS_HLobby  { return p.lobbyHandle }
-func (p *Platform) Sessions() cbinding.EOS_HSessions { return p.sessionsHandle }
-func (p *Platform) P2P() cbinding.EOS_HP2P      { return p.p2pHandle }
+func (p *Platform) Auth() *auth.Auth              { return p.auth }
+func (p *Platform) Connect() *connect.Connect     { return p.connect }
+func (p *Platform) Lobby() *lobby.Lobby            { return p.lobby }
+func (p *Platform) Sessions() *sessions.Sessions   { return p.sessions }
+func (p *Platform) P2P() cbinding.EOS_HP2P         { return p.p2pHandle }
 func (p *Platform) Worker() *threadworker.Worker       { return p.worker }
 func (p *Platform) Notifications() *callback.NotificationRegistry { return p.notify }
 
