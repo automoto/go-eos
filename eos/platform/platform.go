@@ -3,6 +3,7 @@ package platform
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/mydev/go-eos/eos/internal/callback"
 	"github.com/mydev/go-eos/eos/internal/cbinding"
@@ -85,7 +86,11 @@ func Run(ctx context.Context, cfg PlatformConfig, fn func(p *Platform) error) er
 	if err != nil {
 		return err
 	}
-	defer p.Shutdown()
+	defer func() {
+		if shutdownErr := p.Shutdown(); shutdownErr != nil {
+			slog.Error("platform shutdown failed", "error", shutdownErr)
+		}
+	}()
 
 	return fn(p)
 }

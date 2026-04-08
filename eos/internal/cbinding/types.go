@@ -43,6 +43,20 @@ const (
 	EOS_LC_AllCategories EOS_ELogCategory = 0x7FFFFFFF
 )
 
+type EOS_ContinuanceToken uintptr
+
+type EOS_ELoginCredentialType int32
+type EOS_EAuthScopeFlags uint64
+type EOS_EExternalCredentialType int32
+
+type EOS_ELoginStatus int32
+
+const (
+	EOS_LS_NotLoggedIn       EOS_ELoginStatus = 0
+	EOS_LS_UsingLocalProfile EOS_ELoginStatus = 1
+	EOS_LS_LoggedIn          EOS_ELoginStatus = 2
+)
+
 type EOS_ELogLevel int32
 
 const (

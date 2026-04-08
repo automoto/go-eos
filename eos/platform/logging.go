@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/mydev/go-eos/eos/internal/cbinding"
@@ -13,7 +14,7 @@ func initLogging() {
 		}
 
 		level := slogLevel(msg.Level)
-		slog.Default().LogAttrs(nil, level, msg.Message, attrs...)
+		slog.Default().LogAttrs(context.Background(), level, msg.Message, attrs...)
 	})
 
 	cbinding.EOS_Logging_SetLogLevel(cbinding.EOS_LC_AllCategories, cbinding.EOS_LOG_VeryVerbose)
