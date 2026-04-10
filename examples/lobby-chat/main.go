@@ -22,6 +22,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
+	"time"
 
 	"github.com/mydev/go-eos/eos/auth"
 	"github.com/mydev/go-eos/eos/connect"
@@ -29,6 +31,10 @@ import (
 	"github.com/mydev/go-eos/eos/platform"
 	"github.com/mydev/go-eos/eos/types"
 )
+
+func init() {
+	runtime.LockOSThread()
+}
 
 var (
 	flagCreate   = flag.Bool("create", false, "Create a new lobby")
@@ -57,7 +63,7 @@ func main() {
 		ClientSecret:   requireEnv("EOS_CLIENT_SECRET"),
 	}
 
-	if err := platform.Run(ctx, cfg, run); err != nil {
+	if err := platform.RunOnMainThread(ctx, cfg, run); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -84,6 +90,8 @@ func run(p *platform.Platform) error {
 	})
 	defer removeUpdate()
 
+	var activeLobbyId string
+
 	if *flagCreate {
 		lobbyId, createErr := p.Lobby().CreateLobby(ctx, lobby.CreateLobbyOptions{
 			LocalUserId:     productUserId,
@@ -96,6 +104,7 @@ func run(p *platform.Platform) error {
 			return fmt.Errorf("create lobby: %w", createErr)
 		}
 		fmt.Printf("Lobby created: %s\n", lobbyId)
+		activeLobbyId = lobbyId
 
 		// Set a lobby attribute
 		mod, modErr := p.Lobby().UpdateLobbyModification(productUserId, lobbyId)
@@ -122,6 +131,10 @@ func run(p *platform.Platform) error {
 		}
 		defer search.Release()
 
+		if paramErr := search.SetParameter("bucket", *flagBucketId, lobby.ComparisonEqual); paramErr != nil {
+			return fmt.Errorf("set search parameter: %w", paramErr)
+		}
+
 		results, findErr := search.Find(ctx, productUserId)
 		if findErr != nil {
 			return fmt.Errorf("find lobbies: %w", findErr)
@@ -139,6 +152,7 @@ func run(p *platform.Platform) error {
 				return fmt.Errorf("join lobby: %w", joinErr)
 			}
 			fmt.Println("Joined lobby!")
+			activeLobbyId = info.LobbyId
 			for _, d := range results {
 				d.Release()
 			}
@@ -150,6 +164,15 @@ func run(p *platform.Platform) error {
 	fmt.Println("\nPress Ctrl+C to quit.")
 	<-ctx.Done()
 	fmt.Println("\nShutting down...")
+
+	if activeLobbyId != "" {
+		// Use a fresh context since ctx is already cancelled.
+		leaveCtx, leaveCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer leaveCancel()
+		if err := p.Lobby().LeaveLobby(leaveCtx, productUserId, activeLobbyId); err != nil {
+			fmt.Printf("leave lobby: %v\n", err)
+		}
+	}
 	return nil
 }
 
@@ -168,14 +191,14 @@ func loginFlow(ctx context.Context, p *platform.Platform) (types.ProductUserId, 
 	}
 	fmt.Printf("Auth: EpicAccountId=%s\n", loginResult.LocalUserId)
 
-	token, err := p.Auth().CopyUserAuthToken(loginResult.LocalUserId)
+	idToken, err := p.Auth().CopyIdToken(loginResult.LocalUserId)
 	if err != nil {
-		return "", fmt.Errorf("copy auth token: %w", err)
+		return "", fmt.Errorf("copy id token: %w", err)
 	}
 
 	connectResult, err := p.Connect().Login(ctx, connect.LoginOptions{
 		CredentialType: types.ExternalCredentialEpicIDToken,
-		Token:          token.AccessToken,
+		Token:          idToken,
 	})
 	if err != nil {
 		if connectResult != nil && connectResult.ContinuanceToken != 0 {

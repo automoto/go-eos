@@ -57,15 +57,15 @@ type CreateSessionOptions struct {
 }
 
 type SessionInfo struct {
-	SessionId               string
-	HostAddress             string
+	SessionId                string
+	HostAddress              string
 	NumOpenPublicConnections uint32
-	OwnerUserId             types.ProductUserId
-	BucketId                string
-	NumPublicConnections    uint32
-	AllowJoinInProgress     bool
-	PermissionLevel         SessionPermissionLevel
-	InvitesAllowed          bool
+	OwnerUserId              types.ProductUserId
+	BucketId                 string
+	NumPublicConnections     uint32
+	AllowJoinInProgress      bool
+	PermissionLevel          SessionPermissionLevel
+	InvitesAllowed           bool
 }
 
 type Attribute struct {

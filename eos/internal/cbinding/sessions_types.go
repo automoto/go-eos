@@ -84,15 +84,15 @@ type EOS_Sessions_SessionInviteReceivedCallbackInfo struct {
 // Session details info (from CopyInfo)
 
 type EOS_SessionDetails_Info struct {
-	SessionId               string
-	HostAddress             string
+	SessionId                string
+	HostAddress              string
 	NumOpenPublicConnections uint32
-	OwnerUserId             EOS_ProductUserId
-	BucketId                string
-	NumPublicConnections    uint32
-	AllowJoinInProgress     bool
-	PermissionLevel         EOS_EOnlineSessionPermissionLevel
-	InvitesAllowed          bool
+	OwnerUserId              EOS_ProductUserId
+	BucketId                 string
+	NumPublicConnections     uint32
+	AllowJoinInProgress      bool
+	PermissionLevel          EOS_EOnlineSessionPermissionLevel
+	InvitesAllowed           bool
 }
 
 // Active session info

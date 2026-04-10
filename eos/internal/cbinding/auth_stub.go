@@ -63,6 +63,10 @@ func EOS_Auth_CopyUserAuthToken(handle EOS_HAuth, localUserId EOS_EpicAccountId)
 	return nil, EOS_EResult_NotFound
 }
 
+func EOS_Auth_CopyIdToken(handle EOS_HAuth, accountId EOS_EpicAccountId) (string, EOS_EResult) {
+	return "stub-jwt-token", EOS_EResult_Success
+}
+
 func EOS_Auth_AddNotifyLoginStatusChanged(handle EOS_HAuth, clientData uintptr) EOS_NotificationId {
 	return EOS_NotificationId(atomic.AddUint64(&stubAuthNotifyCounter, 1))
 }

@@ -56,3 +56,13 @@ func EOS_Connect_AddNotifyLoginStatusChanged(handle EOS_HConnect, clientData uin
 func EOS_Connect_RemoveNotifyLoginStatusChanged(handle EOS_HConnect, id EOS_NotificationId) {
 	C.eos_connect_remove_notify_login_status_changed(C.uintptr_t(handle), C.uint64_t(id))
 }
+
+func EOS_Connect_CreateDeviceId(handle EOS_HConnect, opts *EOS_Connect_CreateDeviceIdOptions, clientData uintptr) {
+	cModel := C.CString(opts.DeviceModel)
+	defer C.free(unsafe.Pointer(cModel))
+	C.eos_connect_create_device_id(C.uintptr_t(handle), cModel, C.uintptr_t(clientData))
+}
+
+func EOS_Connect_DeleteDeviceId(handle EOS_HConnect, clientData uintptr) {
+	C.eos_connect_delete_device_id(C.uintptr_t(handle), C.uintptr_t(clientData))
+}

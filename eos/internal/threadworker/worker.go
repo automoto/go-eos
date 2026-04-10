@@ -35,6 +35,7 @@ type Worker struct {
 	workCh       chan workItem
 	running      atomic.Bool
 	cancel       context.CancelFunc
+	ctx          context.Context
 	wg           sync.WaitGroup
 }
 
@@ -51,33 +52,48 @@ func New(tickFn TickFunc, opts ...Option) *Worker {
 }
 
 func (w *Worker) Start(ctx context.Context) {
+	w.prepare(ctx)
+	go w.loop()
+}
+
+// StartBlocking runs the worker loop on the calling goroutine.
+// The caller must already hold runtime.LockOSThread (e.g. via init()).
+// This is required on macOS where the EOS SDK's HTTP layer needs
+// the main thread's run loop.
+func (w *Worker) StartBlocking(ctx context.Context) {
+	w.prepare(ctx)
+	w.loop()
+}
+
+func (w *Worker) prepare(ctx context.Context) {
 	w.workCh = make(chan workItem, w.chanSize)
 	ctx, w.cancel = context.WithCancel(ctx)
 	w.running.Store(true)
 	w.wg.Add(1)
+	w.ctx = ctx
+}
 
-	go func() {
-		defer w.wg.Done()
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
-		defer w.running.Store(false)
+func (w *Worker) loop() {
+	defer w.wg.Done()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	defer w.running.Store(false)
 
-		ticker := time.NewTicker(w.tickInterval)
-		defer ticker.Stop()
+	ticker := time.NewTicker(w.tickInterval)
+	defer ticker.Stop()
 
-		for {
-			select {
-			case item := <-w.workCh:
-				item.fn()
-				close(item.done)
-			case <-ticker.C:
-				w.tickFn()
-			case <-ctx.Done():
-				w.drain()
-				return
-			}
+	for {
+		select {
+		case item := <-w.workCh:
+			item.fn()
+			close(item.done)
+		case <-ticker.C:
+			w.tickFn()
+		case <-w.ctx.Done():
+			w.drain()
+			return
 		}
-	}()
+	}
 }
 
 func (w *Worker) drain() {

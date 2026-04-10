@@ -67,6 +67,17 @@ func EOS_Auth_CopyUserAuthToken(handle EOS_HAuth, localUserId EOS_EpicAccountId)
 	}, EOS_EResult_Success
 }
 
+func EOS_Auth_CopyIdToken(handle EOS_HAuth, accountId EOS_EpicAccountId) (string, EOS_EResult) {
+	var tokenPtr C.uintptr_t
+	result := EOS_EResult(C.eos_auth_copy_id_token(C.uintptr_t(handle), C.uintptr_t(accountId), &tokenPtr))
+	if result != EOS_EResult_Success || tokenPtr == 0 {
+		return "", result
+	}
+	jwt := C.GoString(C.eos_auth_id_token_get_jwt(tokenPtr))
+	C.eos_auth_id_token_release(tokenPtr)
+	return jwt, EOS_EResult_Success
+}
+
 func EOS_Auth_AddNotifyLoginStatusChanged(handle EOS_HAuth, clientData uintptr) EOS_NotificationId {
 	return EOS_NotificationId(C.eos_auth_add_notify_login_status_changed(C.uintptr_t(handle), C.uintptr_t(clientData)))
 }

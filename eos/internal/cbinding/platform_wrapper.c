@@ -9,6 +9,10 @@
 #include "eos_logging.h"
 #include <stdint.h>
 
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 int eos_initialize(const char* productName, const char* productVersion) {
 	EOS_InitializeOptions opts = {0};
 	opts.ApiVersion = EOS_INITIALIZE_API_LATEST;
@@ -31,7 +35,16 @@ uintptr_t eos_platform_create(const char* productId, const char* sandboxId,
 	return (uintptr_t)EOS_Platform_Create(&opts);
 }
 
-void eos_platform_tick(uintptr_t handle) { EOS_Platform_Tick((EOS_HPlatform)handle); }
+void eos_platform_tick(uintptr_t handle) {
+	EOS_Platform_Tick((EOS_HPlatform)handle);
+#ifdef __APPLE__
+	// Pump the macOS run loop so SDK networking callbacks fire.
+	// The EOS SDK registers CFRunLoopSources on the calling thread;
+	// Go does not drive the run loop, so we must pump it here.
+	while (CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, true) == kCFRunLoopRunHandledSource) {
+	}
+#endif
+}
 
 void eos_platform_release(uintptr_t handle) { EOS_Platform_Release((EOS_HPlatform)handle); }
 

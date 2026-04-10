@@ -11,6 +11,11 @@ import (
 
 var stubConnectNotifyCounter uint64
 
+// StubCreateDeviceIdResultCode lets tests force the result returned by the
+// stub EOS_Connect_CreateDeviceId. Default is Success. Tests that mutate
+// this MUST reset it to Success in their cleanup.
+var StubCreateDeviceIdResultCode = EOS_EResult_Success
+
 func EOS_Connect_Login(handle EOS_HConnect, opts *EOS_Connect_LoginOptions, clientData uintptr) {
 	go func() {
 		h := cgo.Handle(clientData)
@@ -70,3 +75,28 @@ func EOS_Connect_AddNotifyLoginStatusChanged(handle EOS_HConnect, clientData uin
 }
 
 func EOS_Connect_RemoveNotifyLoginStatusChanged(handle EOS_HConnect, id EOS_NotificationId) {}
+
+func EOS_Connect_CreateDeviceId(handle EOS_HConnect, opts *EOS_Connect_CreateDeviceIdOptions, clientData uintptr) {
+	code := StubCreateDeviceIdResultCode
+	go func() {
+		h := cgo.Handle(clientData)
+		callback.CompleteByHandle(h, callback.OneShotResult{
+			ResultCode: int(code),
+			Data: &EOS_Connect_CreateDeviceIdCallbackInfo{
+				ResultCode: code,
+			},
+		})
+	}()
+}
+
+func EOS_Connect_DeleteDeviceId(handle EOS_HConnect, clientData uintptr) {
+	go func() {
+		h := cgo.Handle(clientData)
+		callback.CompleteByHandle(h, callback.OneShotResult{
+			ResultCode: int(EOS_EResult_Success),
+			Data: &EOS_Connect_DeleteDeviceIdCallbackInfo{
+				ResultCode: EOS_EResult_Success,
+			},
+		})
+	}()
+}

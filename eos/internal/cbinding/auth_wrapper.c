@@ -127,6 +127,26 @@ const char* eos_auth_token_get_refresh_expires_at(uintptr_t t) {
 }
 void eos_auth_token_release(uintptr_t t) { EOS_Auth_Token_Release((EOS_Auth_Token*)t); }
 
+int eos_auth_copy_id_token(uintptr_t handle, uintptr_t accountId, uintptr_t* outToken) {
+	EOS_Auth_CopyIdTokenOptions opts = {0};
+	opts.ApiVersion = EOS_AUTH_COPYIDTOKEN_API_LATEST;
+	opts.AccountId = (EOS_EpicAccountId)accountId;
+	EOS_Auth_IdToken* token = NULL;
+	EOS_EResult result = EOS_Auth_CopyIdToken((EOS_HAuth)handle, &opts, &token);
+	*outToken = (uintptr_t)token;
+	return (int)result;
+}
+
+const char* eos_auth_id_token_get_jwt(uintptr_t t) {
+	return safe_str(((EOS_Auth_IdToken*)t)->JsonWebToken);
+}
+
+uintptr_t eos_auth_id_token_get_account_id(uintptr_t t) {
+	return (uintptr_t)((EOS_Auth_IdToken*)t)->AccountId;
+}
+
+void eos_auth_id_token_release(uintptr_t t) { EOS_Auth_IdToken_Release((EOS_Auth_IdToken*)t); }
+
 uint64_t eos_auth_add_notify_login_status_changed(uintptr_t handle, uintptr_t clientData) {
 	EOS_Auth_AddNotifyLoginStatusChangedOptions opts = {0};
 	opts.ApiVersion = EOS_AUTH_ADDNOTIFYLOGINSTATUSCHANGED_API_LATEST;

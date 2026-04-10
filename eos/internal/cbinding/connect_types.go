@@ -40,3 +40,15 @@ type EOS_Connect_LoginStatusChangedCallbackInfo struct {
 	PreviousStatus EOS_ELoginStatus
 	CurrentStatus  EOS_ELoginStatus
 }
+
+type EOS_Connect_CreateDeviceIdOptions struct {
+	DeviceModel string
+}
+
+type EOS_Connect_CreateDeviceIdCallbackInfo struct {
+	ResultCode EOS_EResult
+}
+
+type EOS_Connect_DeleteDeviceIdCallbackInfo struct {
+	ResultCode EOS_EResult
+}

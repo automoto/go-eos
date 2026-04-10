@@ -77,3 +77,25 @@ func goConnectLoginStatusChangedCallback(clientData C.uintptr_t,
 		CurrentStatus:  EOS_ELoginStatus(currentStatus),
 	})
 }
+
+//export goConnectCreateDeviceIdCallback
+func goConnectCreateDeviceIdCallback(resultCode C.int, clientData C.uintptr_t) {
+	h := cgo.Handle(clientData)
+	callback.CompleteByHandle(h, callback.OneShotResult{
+		ResultCode: int(resultCode),
+		Data: &EOS_Connect_CreateDeviceIdCallbackInfo{
+			ResultCode: EOS_EResult(resultCode),
+		},
+	})
+}
+
+//export goConnectDeleteDeviceIdCallback
+func goConnectDeleteDeviceIdCallback(resultCode C.int, clientData C.uintptr_t) {
+	h := cgo.Handle(clientData)
+	callback.CompleteByHandle(h, callback.OneShotResult{
+		ResultCode: int(resultCode),
+		Data: &EOS_Connect_DeleteDeviceIdCallbackInfo{
+			ResultCode: EOS_EResult(resultCode),
+		},
+	})
+}

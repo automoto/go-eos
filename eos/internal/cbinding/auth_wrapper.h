@@ -24,6 +24,11 @@ double eos_auth_token_get_refresh_expires_in(uintptr_t t);
 const char* eos_auth_token_get_refresh_expires_at(uintptr_t t);
 void eos_auth_token_release(uintptr_t t);
 
+int eos_auth_copy_id_token(uintptr_t handle, uintptr_t accountId, uintptr_t* outToken);
+const char* eos_auth_id_token_get_jwt(uintptr_t t);
+uintptr_t eos_auth_id_token_get_account_id(uintptr_t t);
+void eos_auth_id_token_release(uintptr_t t);
+
 uint64_t eos_auth_add_notify_login_status_changed(uintptr_t handle, uintptr_t clientData);
 void eos_auth_remove_notify_login_status_changed(uintptr_t handle, uint64_t id);
 

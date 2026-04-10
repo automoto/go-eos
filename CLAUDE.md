@@ -28,3 +28,13 @@
 - When I ask for a feature, write tests first
 - Tests should FAIL initially (no implementation exists)
 - Only after tests are written, implement minimal code to pass
+
+## Project Specific Instructions
+- Go version preference: Use Go 1.26.2 for this project
+- CI runner cost constraint: Linux only in CI; macOS/Windows runners cost money
+- EOS SDK location: v1.19.0.3 in static/ directory (gitignored)
+- Cgo binding constraints: Export/extern split, uintptr_t casting, rpath rules, build tags
+- Respect PRD decisions: Don't override strategic user decisions with tactical implementation details
+- macOS main thread requirement: EOS SDK on macOS needs main OS thread for HTTP; use RunOnMainThread
+- Worker/signal context decoupling: RunOnMainThread worker uses Background() so cleanup callbacks land after Ctrl+C
+- C wrapper struct lifetime: Nested EOS option sub-structs must be at function scope, not inside if-blocks

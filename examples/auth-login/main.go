@@ -22,12 +22,20 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 
 	"github.com/mydev/go-eos/eos/auth"
 	"github.com/mydev/go-eos/eos/connect"
 	"github.com/mydev/go-eos/eos/platform"
 	"github.com/mydev/go-eos/eos/types"
 )
+
+func init() {
+	// Lock the main goroutine to the main OS thread. On macOS the EOS SDK's
+	// HTTP layer uses Apple networking which dispatches through the main
+	// thread's run loop.
+	runtime.LockOSThread()
+}
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -43,7 +51,7 @@ func main() {
 		ClientSecret:   requireEnv("EOS_CLIENT_SECRET"),
 	}
 
-	if err := platform.Run(ctx, cfg, run); err != nil {
+	if err := platform.RunOnMainThread(ctx, cfg, run); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -75,17 +83,17 @@ func run(p *platform.Platform) error {
 	})
 	defer removeAuthNotify()
 
-	// Copy auth token for Connect login
-	token, err := p.Auth().CopyUserAuthToken(loginResult.LocalUserId)
+	// Copy ID token for Connect login
+	idToken, err := p.Auth().CopyIdToken(loginResult.LocalUserId)
 	if err != nil {
-		return fmt.Errorf("copy auth token: %w", err)
+		return fmt.Errorf("copy id token: %w", err)
 	}
 
-	// Connect login using the auth token
+	// Connect login using the ID token
 	fmt.Println("Logging in to Connect...")
 	connectResult, err := p.Connect().Login(ctx, connect.LoginOptions{
 		CredentialType: types.ExternalCredentialEpicIDToken,
-		Token:          token.AccessToken,
+		Token:          idToken,
 	})
 	if err != nil {
 		// If user doesn't exist, create one

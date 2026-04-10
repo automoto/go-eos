@@ -18,6 +18,8 @@ extern void goConnectLinkAccountCallback(int resultCode, uintptr_t clientData,
 extern void goConnectAuthExpirationCallback(uintptr_t clientData, uintptr_t localUserId);
 extern void goConnectLoginStatusChangedCallback(uintptr_t clientData, uintptr_t localUserId,
 												int previousStatus, int currentStatus);
+extern void goConnectCreateDeviceIdCallback(int resultCode, uintptr_t clientData);
+extern void goConnectDeleteDeviceIdCallback(int resultCode, uintptr_t clientData);
 
 /* Trampolines */
 
@@ -46,6 +48,14 @@ connectLoginStatusChangedTrampoline(const EOS_Connect_LoginStatusChangedCallback
 										(int)data->PreviousStatus, (int)data->CurrentStatus);
 }
 
+static void connectCreateDeviceIdTrampoline(const EOS_Connect_CreateDeviceIdCallbackInfo* data) {
+	goConnectCreateDeviceIdCallback((int)data->ResultCode, (uintptr_t)data->ClientData);
+}
+
+static void connectDeleteDeviceIdTrampoline(const EOS_Connect_DeleteDeviceIdCallbackInfo* data) {
+	goConnectDeleteDeviceIdCallback((int)data->ResultCode, (uintptr_t)data->ClientData);
+}
+
 /* Wrapper functions */
 
 void eos_connect_login(uintptr_t handle, int credentialType, const char* token,
@@ -55,14 +65,16 @@ void eos_connect_login(uintptr_t handle, int credentialType, const char* token,
 	creds.Type = (EOS_EExternalCredentialType)credentialType;
 	creds.Token = token;
 
+	/* userInfo must live until EOS_Connect_Login returns — declared at
+	 * function scope so opts.UserLoginInfo doesn't dangle. */
+	EOS_Connect_UserLoginInfo userInfo = {0};
+	userInfo.ApiVersion = EOS_CONNECT_USERLOGININFO_API_LATEST;
+	userInfo.DisplayName = displayName;
+
 	EOS_Connect_LoginOptions opts = {0};
 	opts.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
 	opts.Credentials = &creds;
-
 	if (displayName != NULL) {
-		EOS_Connect_UserLoginInfo userInfo = {0};
-		userInfo.ApiVersion = EOS_CONNECT_USERLOGININFO_API_LATEST;
-		userInfo.DisplayName = displayName;
 		opts.UserLoginInfo = &userInfo;
 	}
 
@@ -115,6 +127,21 @@ uint64_t eos_connect_add_notify_login_status_changed(uintptr_t handle, uintptr_t
 
 void eos_connect_remove_notify_login_status_changed(uintptr_t handle, uint64_t id) {
 	EOS_Connect_RemoveNotifyLoginStatusChanged((EOS_HConnect)handle, (EOS_NotificationId)id);
+}
+
+void eos_connect_create_device_id(uintptr_t handle, const char* deviceModel, uintptr_t clientData) {
+	EOS_Connect_CreateDeviceIdOptions opts = {0};
+	opts.ApiVersion = EOS_CONNECT_CREATEDEVICEID_API_LATEST;
+	opts.DeviceModel = deviceModel;
+	EOS_Connect_CreateDeviceId((EOS_HConnect)handle, &opts, (void*)clientData,
+							   &connectCreateDeviceIdTrampoline);
+}
+
+void eos_connect_delete_device_id(uintptr_t handle, uintptr_t clientData) {
+	EOS_Connect_DeleteDeviceIdOptions opts = {0};
+	opts.ApiVersion = EOS_CONNECT_DELETEDEVICEID_API_LATEST;
+	EOS_Connect_DeleteDeviceId((EOS_HConnect)handle, &opts, (void*)clientData,
+							   &connectDeleteDeviceIdTrampoline);
 }
 
 #endif /* EOS_CGO */

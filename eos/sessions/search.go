@@ -114,8 +114,12 @@ func (d *SessionDetails) CopyInfo() (*SessionInfo, error) {
 	var info *cbinding.EOS_SessionDetails_Info
 	var result cbinding.EOS_EResult
 
+	var ownerStr string
 	if err := d.worker.Submit(func() {
 		info, result = cbinding.EOS_SessionDetails_CopyInfo(d.handle)
+		if result == cbinding.EOS_EResult_Success {
+			ownerStr = string(cbinding.EOS_ProductUserId_ToString(info.OwnerUserId))
+		}
 	}); err != nil {
 		return nil, err
 	}
@@ -126,7 +130,7 @@ func (d *SessionDetails) CopyInfo() (*SessionInfo, error) {
 		SessionId:                info.SessionId,
 		HostAddress:              info.HostAddress,
 		NumOpenPublicConnections: info.NumOpenPublicConnections,
-		OwnerUserId:             types.ProductUserId(cbinding.EOS_ProductUserId_ToString(info.OwnerUserId)),
+		OwnerUserId:              types.ProductUserId(ownerStr),
 		BucketId:                 info.BucketId,
 		NumPublicConnections:     info.NumPublicConnections,
 		AllowJoinInProgress:      info.AllowJoinInProgress,

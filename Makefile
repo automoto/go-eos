@@ -1,5 +1,8 @@
 .PHONY: lint lint-c format-c vulncheck
 
+build:
+	go build ./...
+
 lint:
 	golangci-lint run
 

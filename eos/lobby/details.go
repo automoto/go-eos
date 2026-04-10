@@ -15,8 +15,12 @@ func (d *LobbyDetails) Info() (*LobbyInfo, error) {
 	var info *cbinding.EOS_LobbyDetails_Info
 	var result cbinding.EOS_EResult
 
+	var ownerStr string
 	if err := d.worker.Submit(func() {
 		info, result = cbinding.EOS_LobbyDetails_CopyInfo(d.handle)
+		if result == cbinding.EOS_EResult_Success {
+			ownerStr = string(cbinding.EOS_ProductUserId_ToString(info.LobbyOwnerUserId))
+		}
 	}); err != nil {
 		return nil, err
 	}
@@ -25,7 +29,7 @@ func (d *LobbyDetails) Info() (*LobbyInfo, error) {
 	}
 	return &LobbyInfo{
 		LobbyId:          info.LobbyId,
-		LobbyOwnerUserId: types.ProductUserId(cbinding.EOS_ProductUserId_ToString(info.LobbyOwnerUserId)),
+		LobbyOwnerUserId: types.ProductUserId(ownerStr),
 		PermissionLevel:  PermissionLevel(info.PermissionLevel),
 		AvailableSlots:   info.AvailableSlots,
 		MaxMembers:       info.MaxMembers,
@@ -35,13 +39,14 @@ func (d *LobbyDetails) Info() (*LobbyInfo, error) {
 }
 
 func (d *LobbyDetails) GetOwner() types.ProductUserId {
-	var owner cbinding.EOS_ProductUserId
+	var result string
 	if err := d.worker.Submit(func() {
-		owner = cbinding.EOS_LobbyDetails_GetLobbyOwner(d.handle)
+		owner := cbinding.EOS_LobbyDetails_GetLobbyOwner(d.handle)
+		result = string(cbinding.EOS_ProductUserId_ToString(owner))
 	}); err != nil {
 		return ""
 	}
-	return types.ProductUserId(cbinding.EOS_ProductUserId_ToString(owner))
+	return types.ProductUserId(result)
 }
 
 func (d *LobbyDetails) GetMemberCount() int {
@@ -55,13 +60,14 @@ func (d *LobbyDetails) GetMemberCount() int {
 }
 
 func (d *LobbyDetails) GetMemberByIndex(index int) types.ProductUserId {
-	var member cbinding.EOS_ProductUserId
+	var result string
 	if err := d.worker.Submit(func() {
-		member = cbinding.EOS_LobbyDetails_GetMemberByIndex(d.handle, uint32(index))
+		member := cbinding.EOS_LobbyDetails_GetMemberByIndex(d.handle, uint32(index))
+		result = string(cbinding.EOS_ProductUserId_ToString(member))
 	}); err != nil {
 		return ""
 	}
-	return types.ProductUserId(cbinding.EOS_ProductUserId_ToString(member))
+	return types.ProductUserId(result)
 }
 
 func (d *LobbyDetails) GetAttributeCount() int {

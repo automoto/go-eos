@@ -3,33 +3,34 @@ package types
 import "fmt"
 
 const (
-	CodeSuccess              = 0
-	CodeNoConnection         = 1
-	CodeInvalidCredentials   = 2
-	CodeInvalidUser          = 3
-	CodeInvalidAuth          = 4
-	CodeAccessDenied         = 5
-	CodeMissingPermissions   = 6
-	CodeTokenNotAccount      = 7
-	CodeTooManyRequests      = 8
-	CodeAlreadyPending       = 9
-	CodeInvalidParameters    = 10
-	CodeInvalidRequest       = 11
-	CodeIncompatibleVersion  = 13
-	CodeNotConfigured        = 14
-	CodeAlreadyConfigured    = 15
-	CodeNotImplemented       = 16
-	CodeCanceled             = 17
-	CodeNotFound             = 18
-	CodeOperationWillRetry   = 19
-	CodeNoChange             = 20
-	CodeVersionMismatch      = 21
-	CodeLimitExceeded        = 22
-	CodeDisabled             = 23
-	CodeTimedOut             = 27
-	CodeInvalidState         = 38
-	CodeNetworkDisconnected  = 41
-	CodeUnexpectedError      = 0x7FFFFFFF
+	CodeSuccess             = 0
+	CodeNoConnection        = 1
+	CodeInvalidCredentials  = 2
+	CodeInvalidUser         = 3
+	CodeInvalidAuth         = 4
+	CodeAccessDenied        = 5
+	CodeMissingPermissions  = 6
+	CodeTokenNotAccount     = 7
+	CodeTooManyRequests     = 8
+	CodeAlreadyPending      = 9
+	CodeInvalidParameters   = 10
+	CodeInvalidRequest      = 11
+	CodeIncompatibleVersion = 13
+	CodeNotConfigured       = 14
+	CodeAlreadyConfigured   = 15
+	CodeNotImplemented      = 16
+	CodeCanceled            = 17
+	CodeNotFound            = 18
+	CodeOperationWillRetry  = 19
+	CodeNoChange            = 20
+	CodeVersionMismatch     = 21
+	CodeLimitExceeded       = 22
+	CodeDisabled            = 23
+	CodeDuplicateNotAllowed = 24
+	CodeTimedOut            = 27
+	CodeInvalidState        = 38
+	CodeNetworkDisconnected = 41
+	CodeUnexpectedError     = 0x7FFFFFFF
 )
 
 var codeNames = map[int]string{
@@ -56,6 +57,7 @@ var codeNames = map[int]string{
 	CodeVersionMismatch:     "VersionMismatch",
 	CodeLimitExceeded:       "LimitExceeded",
 	CodeDisabled:            "Disabled",
+	CodeDuplicateNotAllowed: "DuplicateNotAllowed",
 	CodeTimedOut:            "TimedOut",
 	CodeInvalidState:        "InvalidState",
 	CodeNetworkDisconnected: "NetworkDisconnected",

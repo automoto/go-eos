@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"runtime/cgo"
 
 	"github.com/mydev/go-eos/eos/internal/callback"
@@ -74,7 +75,6 @@ func (a *Auth) Login(ctx context.Context, opts LoginOptions) (*LoginResult, erro
 		oneshot.Delete()
 		return nil, err
 	}
-
 	result, err := oneshot.Wait(ctx)
 	if err != nil {
 		return nil, err
@@ -85,9 +85,16 @@ func (a *Auth) Login(ctx context.Context, opts LoginOptions) (*LoginResult, erro
 		return nil, types.NewResult(int(info.ResultCode))
 	}
 
+	var localStr, selectedStr string
+	if err := a.worker.Submit(func() {
+		localStr = string(cbinding.EOS_EpicAccountId_ToString(info.LocalUserId))
+		selectedStr = string(cbinding.EOS_EpicAccountId_ToString(info.SelectedAccountId))
+	}); err != nil {
+		return nil, fmt.Errorf("id conversion: %w", err)
+	}
 	lr := &LoginResult{
-		LocalUserId:       types.EpicAccountId(cbinding.EOS_EpicAccountId_ToString(info.LocalUserId)),
-		SelectedAccountId: types.EpicAccountId(cbinding.EOS_EpicAccountId_ToString(info.SelectedAccountId)),
+		LocalUserId:       types.EpicAccountId(localStr),
+		SelectedAccountId: types.EpicAccountId(selectedStr),
 	}
 	if info.PinGrantInfo != nil {
 		lr.PinGrantInfo = &PinGrantInfo{
@@ -158,13 +165,30 @@ func (a *Auth) GetLoggedInAccountsCount() int {
 }
 
 func (a *Auth) GetLoggedInAccountByIndex(index int) types.EpicAccountId {
-	var id cbinding.EOS_EpicAccountId
+	var result string
 	if err := a.worker.Submit(func() {
-		id = cbinding.EOS_Auth_GetLoggedInAccountByIndex(a.handle, int32(index))
+		id := cbinding.EOS_Auth_GetLoggedInAccountByIndex(a.handle, int32(index))
+		result = string(cbinding.EOS_EpicAccountId_ToString(id))
 	}); err != nil {
 		return ""
 	}
-	return types.EpicAccountId(cbinding.EOS_EpicAccountId_ToString(id))
+	return types.EpicAccountId(result)
+}
+
+func (a *Auth) CopyIdToken(accountId types.EpicAccountId) (string, error) {
+	cId := cbinding.EOS_EpicAccountId_FromString(string(accountId))
+	var jwt string
+	var result cbinding.EOS_EResult
+
+	if err := a.worker.Submit(func() {
+		jwt, result = cbinding.EOS_Auth_CopyIdToken(a.handle, cId)
+	}); err != nil {
+		return "", err
+	}
+	if result != cbinding.EOS_EResult_Success {
+		return "", types.NewResult(int(result))
+	}
+	return jwt, nil
 }
 
 func (a *Auth) CopyUserAuthToken(localUserId types.EpicAccountId) (*Token, error) {
@@ -172,8 +196,12 @@ func (a *Auth) CopyUserAuthToken(localUserId types.EpicAccountId) (*Token, error
 	var token *cbinding.EOS_Auth_Token
 	var result cbinding.EOS_EResult
 
+	var accountIdStr string
 	if err := a.worker.Submit(func() {
 		token, result = cbinding.EOS_Auth_CopyUserAuthToken(a.handle, cId)
+		if result == cbinding.EOS_EResult_Success && token != nil {
+			accountIdStr = string(cbinding.EOS_EpicAccountId_ToString(token.AccountId))
+		}
 	}); err != nil {
 		return nil, err
 	}
@@ -184,7 +212,7 @@ func (a *Auth) CopyUserAuthToken(localUserId types.EpicAccountId) (*Token, error
 	return &Token{
 		App:              token.App,
 		ClientId:         token.ClientId,
-		AccountId:        types.EpicAccountId(cbinding.EOS_EpicAccountId_ToString(token.AccountId)),
+		AccountId:        types.EpicAccountId(accountIdStr),
 		AccessToken:      token.AccessToken,
 		ExpiresIn:        token.ExpiresIn,
 		ExpiresAt:        token.ExpiresAt,

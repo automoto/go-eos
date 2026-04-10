@@ -2,6 +2,7 @@ package connect
 
 import (
 	"context"
+	"fmt"
 	"runtime/cgo"
 
 	"github.com/mydev/go-eos/eos/internal/callback"
@@ -73,8 +74,14 @@ func (c *Connect) Login(ctx context.Context, opts LoginOptions) (*LoginResult, e
 		}, types.NewResult(int(info.ResultCode))
 	}
 
+	var localStr string
+	if err := c.worker.Submit(func() {
+		localStr = string(cbinding.EOS_ProductUserId_ToString(info.LocalUserId))
+	}); err != nil {
+		return nil, fmt.Errorf("id conversion: %w", err)
+	}
 	return &LoginResult{
-		LocalUserId:      types.ProductUserId(cbinding.EOS_ProductUserId_ToString(info.LocalUserId)),
+		LocalUserId:      types.ProductUserId(localStr),
 		ContinuanceToken: info.ContinuanceToken,
 	}, nil
 }
@@ -101,7 +108,13 @@ func (c *Connect) CreateUser(ctx context.Context, continuanceToken ContinuanceTo
 		return nil, types.NewResult(int(info.ResultCode))
 	}
 
-	userId := types.ProductUserId(cbinding.EOS_ProductUserId_ToString(info.LocalUserId))
+	var userStr string
+	if err := c.worker.Submit(func() {
+		userStr = string(cbinding.EOS_ProductUserId_ToString(info.LocalUserId))
+	}); err != nil {
+		return nil, fmt.Errorf("id conversion: %w", err)
+	}
+	userId := types.ProductUserId(userStr)
 	return &userId, nil
 }
 
@@ -142,13 +155,14 @@ func (c *Connect) GetLoggedInUsersCount() int {
 }
 
 func (c *Connect) GetLoggedInUserByIndex(index int) types.ProductUserId {
-	var id cbinding.EOS_ProductUserId
+	var result string
 	if err := c.worker.Submit(func() {
-		id = cbinding.EOS_Connect_GetLoggedInUserByIndex(c.handle, int32(index))
+		id := cbinding.EOS_Connect_GetLoggedInUserByIndex(c.handle, int32(index))
+		result = string(cbinding.EOS_ProductUserId_ToString(id))
 	}); err != nil {
 		return ""
 	}
-	return types.ProductUserId(cbinding.EOS_ProductUserId_ToString(id))
+	return types.ProductUserId(result)
 }
 
 func (c *Connect) AddNotifyAuthExpiration(fn func(AuthExpirationInfo)) callback.RemoveNotifyFunc {
@@ -201,4 +215,61 @@ func (c *Connect) AddNotifyLoginStatusChanged(fn func(LoginStatusChangedInfo)) c
 		})
 		handle.Delete()
 	}
+}
+
+// CreateDeviceId creates an anonymous per-device pseudo-account on the local
+// device. After a successful (or DuplicateNotAllowed) call, the caller can
+// authenticate via Connect.Login with ExternalCredentialDeviceIDAccessToken
+// without requiring the player to have any external account.
+//
+// deviceModel is a free-form description (e.g. "PC Windows", "iPhone 15").
+// Maximum 64 UTF-8 characters; longer strings are silently truncated by the SDK.
+//
+// Returns nil on success or if a device ID already exists (EOS_DuplicateNotAllowed).
+func (c *Connect) CreateDeviceId(ctx context.Context, deviceModel string) error {
+	oneshot := callback.NewOneShot()
+
+	if err := c.worker.Submit(func() {
+		cbinding.EOS_Connect_CreateDeviceId(c.handle, &cbinding.EOS_Connect_CreateDeviceIdOptions{
+			DeviceModel: deviceModel,
+		}, oneshot.HandleValue())
+	}); err != nil {
+		oneshot.Delete()
+		return err
+	}
+
+	result, err := oneshot.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	info := result.Data.(*cbinding.EOS_Connect_CreateDeviceIdCallbackInfo)
+	if info.ResultCode == cbinding.EOS_EResult_Success ||
+		int(info.ResultCode) == types.CodeDuplicateNotAllowed {
+		return nil
+	}
+	return types.NewResult(int(info.ResultCode))
+}
+
+// DeleteDeviceId removes the local device ID credentials.
+func (c *Connect) DeleteDeviceId(ctx context.Context) error {
+	oneshot := callback.NewOneShot()
+
+	if err := c.worker.Submit(func() {
+		cbinding.EOS_Connect_DeleteDeviceId(c.handle, oneshot.HandleValue())
+	}); err != nil {
+		oneshot.Delete()
+		return err
+	}
+
+	result, err := oneshot.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	info := result.Data.(*cbinding.EOS_Connect_DeleteDeviceIdCallbackInfo)
+	if info.ResultCode != cbinding.EOS_EResult_Success {
+		return types.NewResult(int(info.ResultCode))
+	}
+	return nil
 }

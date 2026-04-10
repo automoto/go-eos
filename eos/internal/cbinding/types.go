@@ -13,13 +13,14 @@ type EOS_HP2P uintptr
 type EOS_EResult int32
 
 const (
-	EOS_EResult_Success         EOS_EResult = 0
-	EOS_EResult_NoConnection    EOS_EResult = 1
-	EOS_EResult_InvalidAuth     EOS_EResult = 4
-	EOS_EResult_TooManyRequests EOS_EResult = 8
-	EOS_EResult_AlreadyPending  EOS_EResult = 9
-	EOS_EResult_NotFound        EOS_EResult = 18
-	EOS_EResult_UnexpectedError EOS_EResult = 0x7FFFFFFF
+	EOS_EResult_Success             EOS_EResult = 0
+	EOS_EResult_NoConnection        EOS_EResult = 1
+	EOS_EResult_InvalidAuth         EOS_EResult = 4
+	EOS_EResult_TooManyRequests     EOS_EResult = 8
+	EOS_EResult_AlreadyPending      EOS_EResult = 9
+	EOS_EResult_NotFound            EOS_EResult = 18
+	EOS_EResult_DuplicateNotAllowed EOS_EResult = 24
+	EOS_EResult_UnexpectedError     EOS_EResult = 0x7FFFFFFF
 )
 
 type EOS_EpicAccountId uintptr
@@ -73,8 +74,8 @@ type EOS_ELobbyPermissionLevel int32
 
 const (
 	EOS_LPL_PublicAdvertised EOS_ELobbyPermissionLevel = 0
-	EOS_LPL_JoinViaPresence EOS_ELobbyPermissionLevel = 1
-	EOS_LPL_InviteOnly      EOS_ELobbyPermissionLevel = 2
+	EOS_LPL_JoinViaPresence  EOS_ELobbyPermissionLevel = 1
+	EOS_LPL_InviteOnly       EOS_ELobbyPermissionLevel = 2
 )
 
 type EOS_ELobbyAttributeVisibility int32
@@ -114,8 +115,8 @@ type EOS_EOnlineSessionPermissionLevel int32
 
 const (
 	EOS_OSPF_PublicAdvertised EOS_EOnlineSessionPermissionLevel = 0
-	EOS_OSPF_JoinViaPresence EOS_EOnlineSessionPermissionLevel = 1
-	EOS_OSPF_InviteOnly      EOS_EOnlineSessionPermissionLevel = 2
+	EOS_OSPF_JoinViaPresence  EOS_EOnlineSessionPermissionLevel = 1
+	EOS_OSPF_InviteOnly       EOS_EOnlineSessionPermissionLevel = 2
 )
 
 type EOS_ESessionAttributeAdvertisementType int32

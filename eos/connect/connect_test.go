@@ -84,3 +84,30 @@ func Test_add_notify_login_status_changed_should_return_remove_func(t *testing.T
 	assert.NotNil(t, remove)
 	assert.NotPanics(t, func() { remove() })
 }
+
+func Test_create_device_id_should_succeed(t *testing.T) {
+	c, cleanup := setupConnect(t)
+	defer cleanup()
+
+	err := c.CreateDeviceId(context.Background(), "test-device")
+	assert.NoError(t, err)
+}
+
+func Test_create_device_id_should_treat_duplicate_as_success(t *testing.T) {
+	cbinding.StubCreateDeviceIdResultCode = cbinding.EOS_EResult_DuplicateNotAllowed
+	defer func() { cbinding.StubCreateDeviceIdResultCode = cbinding.EOS_EResult_Success }()
+
+	c, cleanup := setupConnect(t)
+	defer cleanup()
+
+	err := c.CreateDeviceId(context.Background(), "test-device")
+	assert.NoError(t, err)
+}
+
+func Test_delete_device_id_should_succeed(t *testing.T) {
+	c, cleanup := setupConnect(t)
+	defer cleanup()
+
+	err := c.DeleteDeviceId(context.Background())
+	assert.NoError(t, err)
+}

@@ -195,7 +195,7 @@ func EOS_LobbySearch_SetTargetUserId(search EOS_HLobbySearch, targetUserId EOS_P
 func EOS_LobbySearch_SetMaxResults(search EOS_HLobbySearch, maxResults uint32) EOS_EResult {
 	return EOS_EResult_Success
 }
-func EOS_LobbySearch_GetSearchResultCount(search EOS_HLobbySearch) uint32         { return 0 }
+func EOS_LobbySearch_GetSearchResultCount(search EOS_HLobbySearch) uint32 { return 0 }
 func EOS_LobbySearch_CopySearchResultByIndex(search EOS_HLobbySearch, index uint32) (EOS_HLobbyDetails, EOS_EResult) {
 	return 0, EOS_EResult_NotFound
 }

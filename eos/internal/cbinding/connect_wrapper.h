@@ -16,4 +16,7 @@ void eos_connect_remove_notify_auth_expiration(uintptr_t handle, uint64_t id);
 uint64_t eos_connect_add_notify_login_status_changed(uintptr_t handle, uintptr_t clientData);
 void eos_connect_remove_notify_login_status_changed(uintptr_t handle, uint64_t id);
 
+void eos_connect_create_device_id(uintptr_t handle, const char* deviceModel, uintptr_t clientData);
+void eos_connect_delete_device_id(uintptr_t handle, uintptr_t clientData);
+
 #endif
