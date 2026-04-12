@@ -1,0 +1,5 @@
+# Dockerfile doesn't COPY anything from the build context — the live repo
+# is bind-mounted at runtime via docker-compose.yml. Ship an empty context
+# so `docker compose build` doesn't upload ~120 MB of EOS SDK binaries.
+*
+!Dockerfile

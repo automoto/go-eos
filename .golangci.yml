@@ -15,3 +15,7 @@ linters:
   exclusions:
     paths:
       - eos/internal/cbinding
+    rules:
+      - linters:
+          - errcheck
+        path: _test\.go

@@ -1,0 +1,115 @@
+# Linux test harness for go-eos.
+#
+# All services share a single image built from ./Dockerfile. The repo is
+# bind-mounted at /workspace so tests and linters run against live code,
+# and Go's module/build caches live on named volumes so re-runs are fast.
+#
+# Services pin linux/amd64 because eos/internal/cbinding/cgo.go links
+# against libEOSSDK-Linux-Shipping.so (x86_64); the ARM64 .so has a
+# different library name and isn't selected by the current LDFLAGS.
+# On Apple Silicon this runs under emulation (slower, but correct).
+#
+# Usage — quick one-shot runs:
+#   docker compose run --rm test     # go test -race -tags eosstub ./...
+#   docker compose run --rm build    # go build ./... (real cgo link)
+#   docker compose run --rm vet      # go vet ./...
+#   docker compose run --rm lint     # golangci-lint run
+#   docker compose run --rm lint-c   # clang-format --dry-run on C files
+#   docker compose run --rm dev      # interactive bash shell
+#
+# Override the command for ad-hoc variations, e.g. to reproduce the CI
+# invocation (which runs tests without the eosstub tag):
+#   docker compose run --rm test go test -race ./...
+#
+# Rebuild the image after changing Dockerfile:
+#   docker compose build
+#
+# End-to-end p2p-echo example (requires ./.env populated with EOS_* vars
+# and the EOS Developer Authentication Tool running on the host):
+#   # Terminal 1 — start the server, note the ProductUserId it prints.
+#   docker compose --profile p2p run --rm p2p-echo-server
+#   # Terminal 2 — connect the client to that puid.
+#   REMOTE_USER_ID=<puid> docker compose --profile p2p run --rm p2p-echo-client
+#
+# The p2p services reach the host's DevAuthTool via host.docker.internal
+# (the `EOS_DEV_AUTH_HOST` environment override below takes precedence
+# over .env, so you do not need to edit .env for Docker use).
+
+x-base: &base
+  image: go-eos-linux
+  build:
+    context: .
+    dockerfile: Dockerfile
+  platform: linux/amd64
+  working_dir: /workspace
+  volumes:
+    - .:/workspace
+    - go-mod-cache:/go/pkg/mod
+    - go-build-cache:/root/.cache/go-build
+
+services:
+  test:
+    <<: *base
+    # The *_test.go files are gated on //go:build eosstub, so the
+    # eosstub tag is required to actually exercise them. Without the
+    # tag the packages compile but contain zero test files.
+    command: go test -race -tags eosstub ./...
+
+  build:
+    <<: *base
+    command: go build ./...
+
+  vet:
+    <<: *base
+    command: go vet ./...
+
+  lint:
+    <<: *base
+    command: golangci-lint run
+
+  lint-c:
+    <<: *base
+    command: make lint-c
+
+  dev:
+    <<: *base
+    command: bash
+    stdin_open: true
+    tty: true
+
+  p2p-echo-server:
+    <<: *base
+    profiles: ["p2p"]
+    env_file:
+      - .env
+    environment:
+      # The DevAuthTool runs on the host (the Linux SDK bundle ships
+      # only macOS/Windows builds of the tool). From Docker Desktop on
+      # macOS/Windows the host is reachable as host.docker.internal;
+      # on Linux hosts this is aliased to the gateway via extra_hosts.
+      EOS_DEV_AUTH_HOST: host.docker.internal:6574
+      EOS_DEV_AUTH_CREDENTIAL: player1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: go run ./examples/p2p-echo --server
+
+  p2p-echo-client:
+    <<: *base
+    profiles: ["p2p"]
+    env_file:
+      - .env
+    environment:
+      EOS_DEV_AUTH_HOST: host.docker.internal:6574
+      EOS_DEV_AUTH_CREDENTIAL: player2
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # REMOTE_USER_ID is substituted from the host env at compose parse
+    # time — run as:
+    #   REMOTE_USER_ID=<server-puid> docker compose --profile p2p run --rm p2p-echo-client
+    # If unset, p2p-echo's own --client flag check will exit with a
+    # clear error.
+    command: go run ./examples/p2p-echo --client --remote-user=${REMOTE_USER_ID:-}
+
+volumes:
+  go-mod-cache:
+  go-build-cache:
