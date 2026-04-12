@@ -165,3 +165,62 @@ const (
 	EOS_LOG_Verbose     EOS_ELogLevel = 500
 	EOS_LOG_VeryVerbose EOS_ELogLevel = 600
 )
+
+// P2P enums
+
+type EOS_ENATType int32
+
+const (
+	EOS_NAT_Unknown  EOS_ENATType = 0
+	EOS_NAT_Open     EOS_ENATType = 1
+	EOS_NAT_Moderate EOS_ENATType = 2
+	EOS_NAT_Strict   EOS_ENATType = 3
+)
+
+type EOS_EPacketReliability int32
+
+const (
+	EOS_PR_UnreliableUnordered EOS_EPacketReliability = 0
+	EOS_PR_ReliableUnordered   EOS_EPacketReliability = 1
+	EOS_PR_ReliableOrdered     EOS_EPacketReliability = 2
+)
+
+type EOS_EConnectionEstablishedType int32
+
+const (
+	EOS_CET_NewConnection EOS_EConnectionEstablishedType = 0
+	EOS_CET_Reconnection  EOS_EConnectionEstablishedType = 1
+)
+
+type EOS_ENetworkConnectionType int32
+
+const (
+	EOS_NCT_NoConnection      EOS_ENetworkConnectionType = 0
+	EOS_NCT_DirectConnection  EOS_ENetworkConnectionType = 1
+	EOS_NCT_RelayedConnection EOS_ENetworkConnectionType = 2
+)
+
+type EOS_EConnectionClosedReason int32
+
+const (
+	EOS_CCR_Unknown            EOS_EConnectionClosedReason = 0
+	EOS_CCR_ClosedByLocalUser  EOS_EConnectionClosedReason = 1
+	EOS_CCR_ClosedByPeer       EOS_EConnectionClosedReason = 2
+	EOS_CCR_TimedOut           EOS_EConnectionClosedReason = 3
+	EOS_CCR_TooManyConnections EOS_EConnectionClosedReason = 4
+	EOS_CCR_InvalidMessage     EOS_EConnectionClosedReason = 5
+	EOS_CCR_InvalidData        EOS_EConnectionClosedReason = 6
+	EOS_CCR_ConnectionFailed   EOS_EConnectionClosedReason = 7
+	EOS_CCR_ConnectionClosed   EOS_EConnectionClosedReason = 8
+	EOS_CCR_NegotiationFailed  EOS_EConnectionClosedReason = 9
+	EOS_CCR_UnexpectedError    EOS_EConnectionClosedReason = 10
+	EOS_CCR_ConnectionIgnored  EOS_EConnectionClosedReason = 11
+)
+
+type EOS_ERelayControl int32
+
+const (
+	EOS_RC_NoRelays    EOS_ERelayControl = 0
+	EOS_RC_AllowRelays EOS_ERelayControl = 1
+	EOS_RC_ForceRelays EOS_ERelayControl = 2
+)

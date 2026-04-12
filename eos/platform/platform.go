@@ -11,18 +11,19 @@ import (
 	"github.com/mydev/go-eos/eos/internal/cbinding"
 	"github.com/mydev/go-eos/eos/internal/threadworker"
 	"github.com/mydev/go-eos/eos/lobby"
+	"github.com/mydev/go-eos/eos/p2p"
 	"github.com/mydev/go-eos/eos/sessions"
 )
 
 type Platform struct {
-	handle    cbinding.EOS_HPlatform
-	worker    *threadworker.Worker
-	notify    *callback.NotificationRegistry
-	auth      *auth.Auth
-	connect   *connect.Connect
-	lobby     *lobby.Lobby
-	sessions  *sessions.Sessions
-	p2pHandle cbinding.EOS_HP2P
+	handle   cbinding.EOS_HPlatform
+	worker   *threadworker.Worker
+	notify   *callback.NotificationRegistry
+	auth     *auth.Auth
+	connect  *connect.Connect
+	lobby    *lobby.Lobby
+	sessions *sessions.Sessions
+	p2p      *p2p.P2P
 }
 
 func Initialize(cfg PlatformConfig) (*Platform, error) {
@@ -79,7 +80,7 @@ func Initialize(cfg PlatformConfig) (*Platform, error) {
 		p.connect = connect.New(cbinding.EOS_Platform_GetConnectInterface(handle), worker)
 		p.lobby = lobby.New(cbinding.EOS_Platform_GetLobbyInterface(handle), worker)
 		p.sessions = sessions.New(cbinding.EOS_Platform_GetSessionsInterface(handle), worker)
-		p.p2pHandle = cbinding.EOS_Platform_GetP2PInterface(handle)
+		p.p2p = p2p.New(cbinding.EOS_Platform_GetP2PInterface(handle), worker)
 	}); err != nil {
 		worker.Stop()
 		return nil, fmt.Errorf("worker submit failed: %w", err)
@@ -108,7 +109,7 @@ func (p *Platform) Auth() *auth.Auth                              { return p.aut
 func (p *Platform) Connect() *connect.Connect                     { return p.connect }
 func (p *Platform) Lobby() *lobby.Lobby                           { return p.lobby }
 func (p *Platform) Sessions() *sessions.Sessions                  { return p.sessions }
-func (p *Platform) P2P() cbinding.EOS_HP2P                        { return p.p2pHandle }
+func (p *Platform) P2P() *p2p.P2P                                 { return p.p2p }
 func (p *Platform) Worker() *threadworker.Worker                  { return p.worker }
 func (p *Platform) Notifications() *callback.NotificationRegistry { return p.notify }
 
@@ -180,7 +181,7 @@ func RunOnMainThread(ctx context.Context, cfg PlatformConfig, fn func(p *Platfor
 	p.connect = connect.New(cbinding.EOS_Platform_GetConnectInterface(handle), worker)
 	p.lobby = lobby.New(cbinding.EOS_Platform_GetLobbyInterface(handle), worker)
 	p.sessions = sessions.New(cbinding.EOS_Platform_GetSessionsInterface(handle), worker)
-	p.p2pHandle = cbinding.EOS_Platform_GetP2PInterface(handle)
+	p.p2p = p2p.New(cbinding.EOS_Platform_GetP2PInterface(handle), worker)
 
 	// Run fn on a separate goroutine. When it finishes, release the SDK
 	// (via Submit so it runs on this same main thread) then stop the loop.

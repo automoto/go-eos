@@ -120,3 +120,68 @@ func Test_worker_should_handle_concurrent_submits(t *testing.T) {
 	wg.Wait()
 	assert.Equal(t, int64(100), counter.Load())
 }
+
+// Simulates a Cgo notification callback fired from inside EOS_Platform_Tick
+// which then calls back into the SDK via Submit. Before the re-entrance
+// guard, the nested Submit would block on workCh forever because the
+// worker goroutine is sitting in tickFn waiting for its own done channel.
+func Test_worker_submit_from_inside_tickFn_should_run_inline(t *testing.T) {
+	var w *Worker
+	var nestedRan atomic.Bool
+	var nestedSubmitErr atomic.Value
+
+	done := make(chan struct{})
+	tickFn := func() {
+		if nestedRan.Load() {
+			return
+		}
+		err := w.Submit(func() { nestedRan.Store(true) })
+		if err != nil {
+			nestedSubmitErr.Store(err)
+		}
+		close(done)
+	}
+
+	w = New(tickFn, WithTickInterval(1*time.Millisecond))
+	ctx, cancel := context.WithCancel(context.Background())
+	w.Start(ctx)
+	defer func() { cancel(); w.Stop() }()
+
+	select {
+	case <-done:
+	case <-time.After(1 * time.Second):
+		t.Fatal("tickFn never completed — nested Submit deadlocked")
+	}
+
+	assert.True(t, nestedRan.Load(), "nested fn should have run")
+	assert.Nil(t, nestedSubmitErr.Load(), "nested Submit should return nil")
+}
+
+// Nested Submits from inside a work item (not a tick) must also run
+// inline — same deadlock shape, different entry point.
+func Test_worker_submit_from_inside_work_item_should_run_inline(t *testing.T) {
+	w, cleanup := startWorker(t, func() {}, WithTickInterval(100*time.Millisecond))
+	defer cleanup()
+
+	var nestedRan atomic.Bool
+	done := make(chan error, 1)
+
+	go func() {
+		done <- w.Submit(func() {
+			// Inside a work item — we're on the worker goroutine.
+			nestedErr := w.Submit(func() { nestedRan.Store(true) })
+			if nestedErr != nil {
+				done <- nestedErr
+			}
+		})
+	}()
+
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(1 * time.Second):
+		t.Fatal("nested Submit from work item deadlocked")
+	}
+
+	assert.True(t, nestedRan.Load())
+}

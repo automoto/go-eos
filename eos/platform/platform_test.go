@@ -107,7 +107,7 @@ func Test_interface_accessors_should_return_non_nil(t *testing.T) {
 	assert.NotNil(t, p.Connect())
 	assert.NotNil(t, p.Lobby())
 	assert.NotNil(t, p.Sessions())
-	assert.NotEqual(t, cbinding.EOS_HP2P(0), p.P2P())
+	assert.NotNil(t, p.P2P())
 }
 
 func Test_logging_should_forward_to_slog(t *testing.T) {

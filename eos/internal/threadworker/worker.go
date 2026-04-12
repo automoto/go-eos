@@ -1,15 +1,38 @@
 package threadworker
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"runtime"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
 var ErrWorkerStopped = errors.New("worker is stopped")
+
+// goroutineID returns the current goroutine's ID by parsing runtime.Stack.
+// Used only for worker re-entrance detection in Submit. The 64-byte buffer
+// is stack-allocated — the only line we care about is
+// "goroutine NNN [running]:\n" which fits comfortably.
+func goroutineID() uint64 {
+	var buf [64]byte
+	n := runtime.Stack(buf[:], false)
+	b := buf[:n]
+	const prefix = "goroutine "
+	if !bytes.HasPrefix(b, []byte(prefix)) {
+		return 0
+	}
+	b = b[len(prefix):]
+	space := bytes.IndexByte(b, ' ')
+	if space < 0 {
+		return 0
+	}
+	id, _ := strconv.ParseUint(string(b[:space]), 10, 64)
+	return id
+}
 
 type TickFunc func()
 
@@ -37,6 +60,12 @@ type Worker struct {
 	cancel       context.CancelFunc
 	ctx          context.Context
 	wg           sync.WaitGroup
+	// workerGID is the goroutine ID of the loop goroutine while it is
+	// running. Submit consults it to detect re-entrant calls originating
+	// from within tickFn or a previously-dispatched work item (typically
+	// via a Cgo notification callback fired during EOS_Platform_Tick) and
+	// executes fn inline instead of deadlocking on an empty workCh.
+	workerGID atomic.Uint64
 }
 
 func New(tickFn TickFunc, opts ...Option) *Worker {
@@ -79,6 +108,9 @@ func (w *Worker) loop() {
 	defer runtime.UnlockOSThread()
 	defer w.running.Store(false)
 
+	w.workerGID.Store(goroutineID())
+	defer w.workerGID.Store(0)
+
 	ticker := time.NewTicker(w.tickInterval)
 	defer ticker.Stop()
 
@@ -119,6 +151,10 @@ func (w *Worker) Submit(fn func()) error {
 	if !w.running.Load() {
 		return ErrWorkerStopped
 	}
+	if w.isWorkerGoroutine() {
+		fn()
+		return nil
+	}
 	item := workItem{fn: fn, done: make(chan struct{})}
 	select {
 	case w.workCh <- item:
@@ -136,6 +172,10 @@ func (w *Worker) SubmitWithContext(ctx context.Context, fn func()) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	if w.isWorkerGoroutine() {
+		fn()
+		return nil
+	}
 
 	item := workItem{fn: fn, done: make(chan struct{})}
 	select {
@@ -150,6 +190,17 @@ func (w *Worker) SubmitWithContext(ctx context.Context, fn func()) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
+}
+
+// isWorkerGoroutine reports whether the caller is running on the worker's
+// own loop goroutine — i.e. Submit was reached re-entrantly from within
+// tickFn or a previously-dispatched work item (most commonly, a Cgo
+// notification callback fired during EOS_Platform_Tick). In that case the
+// caller already holds the worker's locked OS thread, so fn must run
+// inline rather than enqueue — blocking on workCh would self-deadlock.
+func (w *Worker) isWorkerGoroutine() bool {
+	gid := w.workerGID.Load()
+	return gid != 0 && gid == goroutineID()
 }
 
 func (w *Worker) IsRunning() bool {
