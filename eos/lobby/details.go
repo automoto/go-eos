@@ -6,11 +6,13 @@ import (
 	"github.com/mydev/go-eos/eos/types"
 )
 
+// LobbyDetails provides read-only access to a lobby's information and attributes.
 type LobbyDetails struct {
 	handle cbinding.EOS_HLobbyDetails
 	worker *threadworker.Worker
 }
 
+// Info returns the lobby's metadata. Wraps EOS_LobbyDetails_CopyInfo.
 func (d *LobbyDetails) Info() (*LobbyInfo, error) {
 	var info *cbinding.EOS_LobbyDetails_Info
 	var result cbinding.EOS_EResult
@@ -38,6 +40,7 @@ func (d *LobbyDetails) Info() (*LobbyInfo, error) {
 	}, nil
 }
 
+// GetOwner returns the lobby owner's product user ID. Wraps EOS_LobbyDetails_GetLobbyOwner.
 func (d *LobbyDetails) GetOwner() types.ProductUserId {
 	var result string
 	if err := d.worker.Submit(func() {
@@ -49,6 +52,7 @@ func (d *LobbyDetails) GetOwner() types.ProductUserId {
 	return types.ProductUserId(result)
 }
 
+// GetMemberCount returns the number of members in the lobby. Wraps EOS_LobbyDetails_GetMemberCount.
 func (d *LobbyDetails) GetMemberCount() int {
 	var count uint32
 	if err := d.worker.Submit(func() {
@@ -59,6 +63,7 @@ func (d *LobbyDetails) GetMemberCount() int {
 	return int(count)
 }
 
+// GetMemberByIndex returns the product user ID of the member at the given index. Wraps EOS_LobbyDetails_GetMemberByIndex.
 func (d *LobbyDetails) GetMemberByIndex(index int) types.ProductUserId {
 	var result string
 	if err := d.worker.Submit(func() {
@@ -70,6 +75,7 @@ func (d *LobbyDetails) GetMemberByIndex(index int) types.ProductUserId {
 	return types.ProductUserId(result)
 }
 
+// GetAttributeCount returns the number of attributes on the lobby. Wraps EOS_LobbyDetails_GetAttributeCount.
 func (d *LobbyDetails) GetAttributeCount() int {
 	var count uint32
 	if err := d.worker.Submit(func() {
@@ -80,6 +86,7 @@ func (d *LobbyDetails) GetAttributeCount() int {
 	return int(count)
 }
 
+// CopyAttributeByIndex returns the lobby attribute at the given index. Wraps EOS_LobbyDetails_CopyAttributeByIndex.
 func (d *LobbyDetails) CopyAttributeByIndex(index int) (*Attribute, error) {
 	var attr *cbinding.EOS_Lobby_Attribute
 	var result cbinding.EOS_EResult
@@ -96,6 +103,7 @@ func (d *LobbyDetails) CopyAttributeByIndex(index int) (*Attribute, error) {
 	return &a, nil
 }
 
+// CopyAttributeByKey returns the lobby attribute with the given key. Wraps EOS_LobbyDetails_CopyAttributeByKey.
 func (d *LobbyDetails) CopyAttributeByKey(key string) (*Attribute, error) {
 	var attr *cbinding.EOS_Lobby_Attribute
 	var result cbinding.EOS_EResult
@@ -112,6 +120,7 @@ func (d *LobbyDetails) CopyAttributeByKey(key string) (*Attribute, error) {
 	return &a, nil
 }
 
+// Release frees the underlying EOS lobby details handle.
 func (d *LobbyDetails) Release() {
 	_ = d.worker.Submit(func() { cbinding.EOS_LobbyDetails_Release(d.handle) })
 }

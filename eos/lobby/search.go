@@ -9,11 +9,13 @@ import (
 	"github.com/mydev/go-eos/eos/types"
 )
 
+// LobbySearch is a handle used to configure and execute lobby search queries.
 type LobbySearch struct {
 	handle cbinding.EOS_HLobbySearch
 	worker *threadworker.Worker
 }
 
+// SetParameter adds a search filter parameter. Wraps EOS_LobbySearch_SetParameter.
 func (s *LobbySearch) SetParameter(key string, value any, op ComparisonOp) error {
 	cOp := cbinding.EOS_EComparisonOp(op)
 	var result cbinding.EOS_EResult
@@ -40,6 +42,7 @@ func (s *LobbySearch) SetParameter(key string, value any, op ComparisonOp) error
 	return nil
 }
 
+// SetLobbyId filters the search to a specific lobby ID. Wraps EOS_LobbySearch_SetLobbyId.
 func (s *LobbySearch) SetLobbyId(lobbyId string) error {
 	var result cbinding.EOS_EResult
 	if err := s.worker.Submit(func() {
@@ -53,6 +56,7 @@ func (s *LobbySearch) SetLobbyId(lobbyId string) error {
 	return nil
 }
 
+// SetMaxResults limits the number of search results returned. Wraps EOS_LobbySearch_SetMaxResults.
 func (s *LobbySearch) SetMaxResults(maxResults uint32) error {
 	var result cbinding.EOS_EResult
 	if err := s.worker.Submit(func() {
@@ -66,6 +70,7 @@ func (s *LobbySearch) SetMaxResults(maxResults uint32) error {
 	return nil
 }
 
+// Find executes the lobby search and returns matching lobby details. Wraps EOS_LobbySearch_Find.
 func (s *LobbySearch) Find(ctx context.Context, localUserId types.ProductUserId) ([]*LobbyDetails, error) {
 	oneshot := callback.NewOneShot()
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
@@ -110,6 +115,7 @@ func (s *LobbySearch) Find(ctx context.Context, localUserId types.ProductUserId)
 	return results, nil
 }
 
+// Release frees the underlying EOS lobby search handle.
 func (s *LobbySearch) Release() {
 	_ = s.worker.Submit(func() { cbinding.EOS_LobbySearch_Release(s.handle) })
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/mydev/go-eos/eos/sessions"
 )
 
+// Platform wraps EOS_HPlatform and owns the SDK lifecycle, tick loop, and interface accessors.
 type Platform struct {
 	handle   cbinding.EOS_HPlatform
 	worker   *threadworker.Worker
@@ -26,6 +27,7 @@ type Platform struct {
 	p2p      *p2p.P2P
 }
 
+// Initialize creates and initializes the EOS platform. See EOS_Platform_Create.
 func Initialize(cfg PlatformConfig) (*Platform, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
@@ -93,6 +95,7 @@ func Initialize(cfg PlatformConfig) (*Platform, error) {
 	return p, nil
 }
 
+// Shutdown releases the EOS platform and stops the tick loop. See EOS_Platform_Release.
 func (p *Platform) Shutdown() error {
 	// Release on the worker's locked OS thread, then zero the handle
 	// so the tick function no-ops before the worker fully stops.
@@ -105,14 +108,28 @@ func (p *Platform) Shutdown() error {
 	return nil
 }
 
-func (p *Platform) Auth() *auth.Auth                              { return p.auth }
-func (p *Platform) Connect() *connect.Connect                     { return p.connect }
-func (p *Platform) Lobby() *lobby.Lobby                           { return p.lobby }
-func (p *Platform) Sessions() *sessions.Sessions                  { return p.sessions }
-func (p *Platform) P2P() *p2p.P2P                                 { return p.p2p }
-func (p *Platform) Worker() *threadworker.Worker                  { return p.worker }
+// Auth returns the Auth interface wrapper.
+func (p *Platform) Auth() *auth.Auth { return p.auth }
+
+// Connect returns the Connect interface wrapper.
+func (p *Platform) Connect() *connect.Connect { return p.connect }
+
+// Lobby returns the Lobby interface wrapper.
+func (p *Platform) Lobby() *lobby.Lobby { return p.lobby }
+
+// Sessions returns the Sessions interface wrapper.
+func (p *Platform) Sessions() *sessions.Sessions { return p.sessions }
+
+// P2P returns the P2P interface wrapper.
+func (p *Platform) P2P() *p2p.P2P { return p.p2p }
+
+// Worker returns the platform's thread worker for scheduling SDK calls.
+func (p *Platform) Worker() *threadworker.Worker { return p.worker }
+
+// Notifications returns the platform's notification registry.
 func (p *Platform) Notifications() *callback.NotificationRegistry { return p.notify }
 
+// Run initializes the platform, calls fn, and shuts down when fn returns.
 func Run(ctx context.Context, cfg PlatformConfig, fn func(p *Platform) error) error {
 	p, err := Initialize(cfg)
 	if err != nil {

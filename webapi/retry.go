@@ -102,8 +102,3 @@ func parseRetryAfter(val string) time.Duration {
 func (c *Client) doGet(ctx context.Context, path string, result any) error {
 	return c.do(ctx, http.MethodGet, path, nil, result)
 }
-
-// doPost is a convenience wrapper for POST requests with a JSON body.
-func (c *Client) doPost(ctx context.Context, path string, body, result any) error {
-	return c.do(ctx, http.MethodPost, path, body, result)
-}

@@ -9,11 +9,13 @@ import (
 	"github.com/mydev/go-eos/eos/types"
 )
 
+// SessionSearch wraps EOS_HSessionSearch for querying available sessions.
 type SessionSearch struct {
 	handle cbinding.EOS_HSessionSearch
 	worker *threadworker.Worker
 }
 
+// SetParameter adds a search filter parameter with the given comparison operator. See EOS_SessionSearch_SetParameter.
 func (s *SessionSearch) SetParameter(key string, value any, op ComparisonOp) error {
 	cOp := cbinding.EOS_EComparisonOp(op)
 	var result cbinding.EOS_EResult
@@ -40,6 +42,7 @@ func (s *SessionSearch) SetParameter(key string, value any, op ComparisonOp) err
 	return nil
 }
 
+// SetSessionId restricts the search to a specific session ID. See EOS_SessionSearch_SetSessionId.
 func (s *SessionSearch) SetSessionId(sessionId string) error {
 	var result cbinding.EOS_EResult
 	if err := s.worker.Submit(func() {
@@ -53,6 +56,7 @@ func (s *SessionSearch) SetSessionId(sessionId string) error {
 	return nil
 }
 
+// Find executes the search and returns matching session details. See EOS_SessionSearch_Find.
 func (s *SessionSearch) Find(ctx context.Context, localUserId types.ProductUserId) ([]*SessionDetails, error) {
 	oneshot := callback.NewOneShot()
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
@@ -97,19 +101,23 @@ func (s *SessionSearch) Find(ctx context.Context, localUserId types.ProductUserI
 	return results, nil
 }
 
+// Release frees the underlying SDK search handle. See EOS_SessionSearch_Release.
 func (s *SessionSearch) Release() {
 	_ = s.worker.Submit(func() { cbinding.EOS_SessionSearch_Release(s.handle) })
 }
 
+// SessionDetails wraps EOS_HSessionDetails for reading session metadata and attributes.
 type SessionDetails struct {
 	handle cbinding.EOS_HSessionDetails
 	worker *threadworker.Worker
 }
 
+// Handle returns the raw SDK session details handle for use with JoinSession.
 func (d *SessionDetails) Handle() cbinding.EOS_HSessionDetails {
 	return d.handle
 }
 
+// CopyInfo copies the session metadata from the details handle. See EOS_SessionDetails_CopyInfo.
 func (d *SessionDetails) CopyInfo() (*SessionInfo, error) {
 	var info *cbinding.EOS_SessionDetails_Info
 	var result cbinding.EOS_EResult
@@ -139,6 +147,7 @@ func (d *SessionDetails) CopyInfo() (*SessionInfo, error) {
 	}, nil
 }
 
+// GetAttributeCount returns the number of attributes on this session. See EOS_SessionDetails_GetSessionAttributeCount.
 func (d *SessionDetails) GetAttributeCount() int {
 	var count uint32
 	if err := d.worker.Submit(func() {
@@ -149,6 +158,7 @@ func (d *SessionDetails) GetAttributeCount() int {
 	return int(count)
 }
 
+// CopyAttributeByIndex copies the attribute at the given index. See EOS_SessionDetails_CopySessionAttributeByIndex.
 func (d *SessionDetails) CopyAttributeByIndex(index int) (*Attribute, error) {
 	var attr *cbinding.EOS_Sessions_Attribute
 	var result cbinding.EOS_EResult
@@ -164,6 +174,7 @@ func (d *SessionDetails) CopyAttributeByIndex(index int) (*Attribute, error) {
 	return attrFromCBinding(attr), nil
 }
 
+// Release frees the underlying SDK session details handle. See EOS_SessionDetails_Release.
 func (d *SessionDetails) Release() {
 	_ = d.worker.Submit(func() { cbinding.EOS_SessionDetails_Release(d.handle) })
 }

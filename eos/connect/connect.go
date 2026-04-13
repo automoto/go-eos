@@ -11,43 +11,52 @@ import (
 	"github.com/mydev/go-eos/eos/types"
 )
 
+// ContinuanceToken is an opaque token used to continue an interrupted Connect login flow.
 type ContinuanceToken = cbinding.EOS_ContinuanceToken
 
+// Connect wraps the EOS Connect interface for product-user authentication.
 type Connect struct {
 	handle cbinding.EOS_HConnect
 	worker *threadworker.Worker
 }
 
+// New creates a new Connect instance from the given platform handle and worker.
 func New(handle cbinding.EOS_HConnect, worker *threadworker.Worker) *Connect {
 	return &Connect{handle: handle, worker: worker}
 }
 
+// LoginOptions configures a Connect login request.
 type LoginOptions struct {
 	CredentialType types.ExternalCredentialType
 	Token          string
 	DisplayName    string
 }
 
+// LoginResult holds the outcome of a Connect login attempt.
 type LoginResult struct {
 	LocalUserId      types.ProductUserId
 	ContinuanceToken ContinuanceToken
 }
 
+// LinkAccountOptions configures a request to link an external account to a product user.
 type LinkAccountOptions struct {
 	LocalUserId      types.ProductUserId
 	ContinuanceToken ContinuanceToken
 }
 
+// AuthExpirationInfo is delivered when a product user's auth token is about to expire.
 type AuthExpirationInfo struct {
 	LocalUserId types.ProductUserId
 }
 
+// LoginStatusChangedInfo is delivered when a product user's login status changes.
 type LoginStatusChangedInfo struct {
 	LocalUserId    types.ProductUserId
 	PreviousStatus types.LoginStatus
 	CurrentStatus  types.LoginStatus
 }
 
+// Login authenticates a product user via the EOS Connect interface. See EOS_Connect_Login.
 func (c *Connect) Login(ctx context.Context, opts LoginOptions) (*LoginResult, error) {
 	oneshot := callback.NewOneShot()
 
@@ -86,6 +95,7 @@ func (c *Connect) Login(ctx context.Context, opts LoginOptions) (*LoginResult, e
 	}, nil
 }
 
+// CreateUser creates a new product user from a continuance token. See EOS_Connect_CreateUser.
 func (c *Connect) CreateUser(ctx context.Context, continuanceToken ContinuanceToken) (*types.ProductUserId, error) {
 	oneshot := callback.NewOneShot()
 
@@ -118,6 +128,7 @@ func (c *Connect) CreateUser(ctx context.Context, continuanceToken ContinuanceTo
 	return &userId, nil
 }
 
+// LinkAccount links an external account to an existing product user. See EOS_Connect_LinkAccount.
 func (c *Connect) LinkAccount(ctx context.Context, opts LinkAccountOptions) error {
 	oneshot := callback.NewOneShot()
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(opts.LocalUserId))
@@ -144,6 +155,7 @@ func (c *Connect) LinkAccount(ctx context.Context, opts LinkAccountOptions) erro
 	return nil
 }
 
+// GetLoggedInUsersCount returns the number of currently logged-in product users.
 func (c *Connect) GetLoggedInUsersCount() int {
 	var count int32
 	if err := c.worker.Submit(func() {
@@ -154,6 +166,7 @@ func (c *Connect) GetLoggedInUsersCount() int {
 	return int(count)
 }
 
+// GetLoggedInUserByIndex returns the ProductUserId at the given index.
 func (c *Connect) GetLoggedInUserByIndex(index int) types.ProductUserId {
 	var result string
 	if err := c.worker.Submit(func() {
@@ -165,6 +178,7 @@ func (c *Connect) GetLoggedInUserByIndex(index int) types.ProductUserId {
 	return types.ProductUserId(result)
 }
 
+// AddNotifyAuthExpiration registers a callback for auth token expiration warnings. See EOS_Connect_AddNotifyAuthExpiration.
 func (c *Connect) AddNotifyAuthExpiration(fn func(AuthExpirationInfo)) callback.RemoveNotifyFunc {
 	notifyFn := callback.NotifyFunc(func(data any) {
 		info := data.(*cbinding.EOS_Connect_AuthExpirationCallbackInfo)
@@ -190,6 +204,7 @@ func (c *Connect) AddNotifyAuthExpiration(fn func(AuthExpirationInfo)) callback.
 	}
 }
 
+// AddNotifyLoginStatusChanged registers a callback for login status changes. See EOS_Connect_AddNotifyLoginStatusChanged.
 func (c *Connect) AddNotifyLoginStatusChanged(fn func(LoginStatusChangedInfo)) callback.RemoveNotifyFunc {
 	notifyFn := callback.NotifyFunc(func(data any) {
 		info := data.(*cbinding.EOS_Connect_LoginStatusChangedCallbackInfo)

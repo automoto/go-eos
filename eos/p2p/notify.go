@@ -15,7 +15,9 @@ import (
 type ConnectionEstablishedType int
 
 const (
-	NewConnection           ConnectionEstablishedType = 0
+	// NewConnection indicates a brand-new P2P connection.
+	NewConnection ConnectionEstablishedType = 0
+	// ReconnectionEstablished indicates a reconnect or network-type transition.
 	ReconnectionEstablished ConnectionEstablishedType = 1
 )
 
@@ -24,27 +26,42 @@ const (
 type NetworkConnectionType int
 
 const (
+	// NoNetworkConnection indicates no underlying network connection.
 	NoNetworkConnection NetworkConnectionType = 0
-	DirectConnection    NetworkConnectionType = 1
-	RelayedConnection   NetworkConnectionType = 2
+	// DirectConnection indicates a direct peer-to-peer connection.
+	DirectConnection NetworkConnectionType = 1
+	// RelayedConnection indicates the connection is routed through an Epic relay server.
+	RelayedConnection NetworkConnectionType = 2
 )
 
 // ConnectionClosedReason mirrors EOS_EConnectionClosedReason.
 type ConnectionClosedReason int
 
 const (
-	ClosedUnknown            ConnectionClosedReason = 0
-	ClosedByLocalUser        ConnectionClosedReason = 1
-	ClosedByPeer             ConnectionClosedReason = 2
-	ClosedTimedOut           ConnectionClosedReason = 3
+	// ClosedUnknown indicates the connection closed for an unknown reason.
+	ClosedUnknown ConnectionClosedReason = 0
+	// ClosedByLocalUser indicates the local user closed the connection.
+	ClosedByLocalUser ConnectionClosedReason = 1
+	// ClosedByPeer indicates the remote peer closed the connection.
+	ClosedByPeer ConnectionClosedReason = 2
+	// ClosedTimedOut indicates the connection timed out.
+	ClosedTimedOut ConnectionClosedReason = 3
+	// ClosedTooManyConnections indicates the connection was dropped due to too many connections.
 	ClosedTooManyConnections ConnectionClosedReason = 4
-	ClosedInvalidMessage     ConnectionClosedReason = 5
-	ClosedInvalidData        ConnectionClosedReason = 6
-	ClosedConnectionFailed   ConnectionClosedReason = 7
-	ClosedConnectionClosed   ConnectionClosedReason = 8
-	ClosedNegotiationFailed  ConnectionClosedReason = 9
-	ClosedUnexpectedError    ConnectionClosedReason = 10
-	ClosedConnectionIgnored  ConnectionClosedReason = 11
+	// ClosedInvalidMessage indicates the connection was closed due to an invalid message.
+	ClosedInvalidMessage ConnectionClosedReason = 5
+	// ClosedInvalidData indicates the connection was closed due to invalid data.
+	ClosedInvalidData ConnectionClosedReason = 6
+	// ClosedConnectionFailed indicates the connection attempt failed.
+	ClosedConnectionFailed ConnectionClosedReason = 7
+	// ClosedConnectionClosed indicates the connection was already closed.
+	ClosedConnectionClosed ConnectionClosedReason = 8
+	// ClosedNegotiationFailed indicates the connection negotiation failed.
+	ClosedNegotiationFailed ConnectionClosedReason = 9
+	// ClosedUnexpectedError indicates an unexpected error closed the connection.
+	ClosedUnexpectedError ConnectionClosedReason = 10
+	// ClosedConnectionIgnored indicates the incoming connection request was ignored.
+	ClosedConnectionIgnored ConnectionClosedReason = 11
 )
 
 // IncomingConnectionRequest is the payload for AddNotifyPeerConnectionRequest.

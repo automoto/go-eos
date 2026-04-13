@@ -7,6 +7,7 @@ import (
 
 const defaultTickInterval = 16 * time.Millisecond
 
+// PlatformConfig holds the configuration for EOS platform initialization.
 type PlatformConfig struct {
 	ProductName    string
 	ProductVersion string

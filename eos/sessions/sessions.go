@@ -10,45 +10,65 @@ import (
 	"github.com/mydev/go-eos/eos/types"
 )
 
+// Sessions wraps the EOS Sessions interface for creating, searching, and managing game sessions.
 type Sessions struct {
 	handle cbinding.EOS_HSessions
 	worker *threadworker.Worker
 }
 
+// New constructs a Sessions from a raw cbinding handle and the platform's worker.
 func New(handle cbinding.EOS_HSessions, worker *threadworker.Worker) *Sessions {
 	return &Sessions{handle: handle, worker: worker}
 }
 
+// SessionPermissionLevel mirrors EOS_EOnlineSessionPermissionLevel.
 type SessionPermissionLevel int
 
 const (
+	// PermissionPublicAdvertised allows anyone to find and join the session.
 	PermissionPublicAdvertised SessionPermissionLevel = 0
-	PermissionJoinViaPresence  SessionPermissionLevel = 1
-	PermissionInviteOnly       SessionPermissionLevel = 2
+	// PermissionJoinViaPresence restricts joining to presence-based discovery.
+	PermissionJoinViaPresence SessionPermissionLevel = 1
+	// PermissionInviteOnly restricts joining to invited players only.
+	PermissionInviteOnly SessionPermissionLevel = 2
 )
 
+// AdvertisementType mirrors EOS_ESessionAttributeAdvertisementType.
 type AdvertisementType int
 
 const (
+	// AdvertisementDontAdvertise keeps the attribute private to the session.
 	AdvertisementDontAdvertise AdvertisementType = 0
-	AdvertisementAdvertise     AdvertisementType = 1
+	// AdvertisementAdvertise makes the attribute visible in search results.
+	AdvertisementAdvertise AdvertisementType = 1
 )
 
+// SessionState mirrors EOS_EOnlineSessionState.
 type SessionState int
 
 const (
-	StateNoSession  SessionState = 0
-	StateCreating   SessionState = 1
-	StatePending    SessionState = 2
-	StateStarting   SessionState = 3
+	// StateNoSession indicates no session exists.
+	StateNoSession SessionState = 0
+	// StateCreating indicates the session is being created.
+	StateCreating SessionState = 1
+	// StatePending indicates the session is pending.
+	StatePending SessionState = 2
+	// StateStarting indicates the session is starting.
+	StateStarting SessionState = 3
+	// StateInProgress indicates the session is actively running.
 	StateInProgress SessionState = 4
-	StateEnding     SessionState = 5
-	StateEnded      SessionState = 6
+	// StateEnding indicates the session is ending.
+	StateEnding SessionState = 5
+	// StateEnded indicates the session has ended.
+	StateEnded SessionState = 6
+	// StateDestroying indicates the session is being destroyed.
 	StateDestroying SessionState = 7
 )
 
+// ComparisonOp mirrors EOS_EComparisonOp for session search parameter filtering.
 type ComparisonOp = int
 
+// CreateSessionOptions holds the parameters for creating a new session.
 type CreateSessionOptions struct {
 	SessionName string
 	BucketId    string
@@ -56,6 +76,7 @@ type CreateSessionOptions struct {
 	LocalUserId types.ProductUserId
 }
 
+// SessionInfo contains the metadata for a session, as returned by EOS_SessionDetails_CopyInfo.
 type SessionInfo struct {
 	SessionId                string
 	HostAddress              string
@@ -68,20 +89,21 @@ type SessionInfo struct {
 	InvitesAllowed           bool
 }
 
+// Attribute represents a key-value pair attached to a session.
 type Attribute struct {
 	Key               string
 	Value             any
 	AdvertisementType AdvertisementType
 }
 
+// InviteReceivedInfo is the payload delivered by AddNotifySessionInviteReceived.
 type InviteReceivedInfo struct {
 	LocalUserId  types.ProductUserId
 	TargetUserId types.ProductUserId
 	InviteId     string
 }
 
-// Core lifecycle
-
+// CreateSessionModification creates a new session modification handle. See EOS_Sessions_CreateSessionModification.
 func (s *Sessions) CreateSessionModification(opts CreateSessionOptions) (*SessionModification, error) {
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(opts.LocalUserId))
 	var mod cbinding.EOS_HSessionModification
@@ -103,6 +125,7 @@ func (s *Sessions) CreateSessionModification(opts CreateSessionOptions) (*Sessio
 	return &SessionModification{handle: mod, worker: s.worker}, nil
 }
 
+// UpdateSession applies a session modification and returns the updated session info. See EOS_Sessions_UpdateSession.
 func (s *Sessions) UpdateSession(ctx context.Context, mod *SessionModification) (*SessionInfo, error) {
 	oneshot := callback.NewOneShot()
 
@@ -124,12 +147,14 @@ func (s *Sessions) UpdateSession(ctx context.Context, mod *SessionModification) 
 	return &SessionInfo{SessionId: info.SessionId}, nil
 }
 
+// DestroySession destroys the named session. See EOS_Sessions_DestroySession.
 func (s *Sessions) DestroySession(ctx context.Context, sessionName string) error {
 	return s.simpleAsync(ctx, func(clientData uintptr) {
 		cbinding.EOS_Sessions_DestroySession(s.handle, sessionName, clientData)
 	})
 }
 
+// JoinSession joins an existing session using the provided session details. See EOS_Sessions_JoinSession.
 func (s *Sessions) JoinSession(ctx context.Context, sessionName string, details cbinding.EOS_HSessionDetails, localUserId types.ProductUserId) error {
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
 	return s.simpleAsync(ctx, func(clientData uintptr) {
@@ -137,18 +162,21 @@ func (s *Sessions) JoinSession(ctx context.Context, sessionName string, details 
 	})
 }
 
+// StartSession transitions the named session to the in-progress state. See EOS_Sessions_StartSession.
 func (s *Sessions) StartSession(ctx context.Context, sessionName string) error {
 	return s.simpleAsync(ctx, func(clientData uintptr) {
 		cbinding.EOS_Sessions_StartSession(s.handle, sessionName, clientData)
 	})
 }
 
+// EndSession transitions the named session to the ended state. See EOS_Sessions_EndSession.
 func (s *Sessions) EndSession(ctx context.Context, sessionName string) error {
 	return s.simpleAsync(ctx, func(clientData uintptr) {
 		cbinding.EOS_Sessions_EndSession(s.handle, sessionName, clientData)
 	})
 }
 
+// RegisterPlayers registers the given players with the named session. See EOS_Sessions_RegisterPlayers.
 func (s *Sessions) RegisterPlayers(ctx context.Context, sessionName string, players []types.ProductUserId) error {
 	cIds := make([]cbinding.EOS_ProductUserId, len(players))
 	for i, p := range players {
@@ -159,6 +187,7 @@ func (s *Sessions) RegisterPlayers(ctx context.Context, sessionName string, play
 	})
 }
 
+// UnregisterPlayers removes the given players from the named session. See EOS_Sessions_UnregisterPlayers.
 func (s *Sessions) UnregisterPlayers(ctx context.Context, sessionName string, players []types.ProductUserId) error {
 	cIds := make([]cbinding.EOS_ProductUserId, len(players))
 	for i, p := range players {
@@ -169,8 +198,7 @@ func (s *Sessions) UnregisterPlayers(ctx context.Context, sessionName string, pl
 	})
 }
 
-// Search
-
+// CreateSessionSearch creates a session search handle with the given max result count. See EOS_Sessions_CreateSessionSearch.
 func (s *Sessions) CreateSessionSearch(maxResults uint32) (*SessionSearch, error) {
 	var search cbinding.EOS_HSessionSearch
 	var result cbinding.EOS_EResult
@@ -186,8 +214,7 @@ func (s *Sessions) CreateSessionSearch(maxResults uint32) (*SessionSearch, error
 	return &SessionSearch{handle: search, worker: s.worker}, nil
 }
 
-// Notifications
-
+// AddNotifySessionInviteReceived registers a callback for session invite notifications. See EOS_Sessions_AddNotifySessionInviteReceived.
 func (s *Sessions) AddNotifySessionInviteReceived(fn func(InviteReceivedInfo)) callback.RemoveNotifyFunc {
 	notifyFn := callback.NotifyFunc(func(data any) {
 		info := data.(*cbinding.EOS_Sessions_SessionInviteReceivedCallbackInfo)

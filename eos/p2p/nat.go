@@ -16,12 +16,17 @@ import (
 type NATType int
 
 const (
-	NATUnknown  NATType = 0
-	NATOpen     NATType = 1
+	// NATUnknown indicates the NAT type has not been queried yet.
+	NATUnknown NATType = 0
+	// NATOpen indicates an open NAT with no connection restrictions.
+	NATOpen NATType = 1
+	// NATModerate indicates a moderate NAT that can connect to most peers.
 	NATModerate NATType = 2
-	NATStrict   NATType = 3
+	// NATStrict indicates a strict NAT that can typically only connect to open or moderate peers.
+	NATStrict NATType = 3
 )
 
+// String returns a human-readable label for the NAT type.
 func (n NATType) String() string {
 	switch n {
 	case NATOpen:
@@ -87,8 +92,11 @@ func (p *P2P) GetNATType() (NATType, error) {
 type RelayControl int
 
 const (
-	NoRelays    RelayControl = 0
+	// NoRelays disables relay servers; only direct connections are used.
+	NoRelays RelayControl = 0
+	// AllowRelays allows relay servers as a fallback (default).
 	AllowRelays RelayControl = 1
+	// ForceRelays forces all traffic through relay servers.
 	ForceRelays RelayControl = 2
 )
 

@@ -12,9 +12,12 @@ import (
 type Reliability int
 
 const (
+	// UnreliableUnordered sends packets with no delivery or ordering guarantees.
 	UnreliableUnordered Reliability = 0
-	ReliableUnordered   Reliability = 1
-	ReliableOrdered     Reliability = 2
+	// ReliableUnordered guarantees delivery but not ordering.
+	ReliableUnordered Reliability = 1
+	// ReliableOrdered guarantees both delivery and ordering.
+	ReliableOrdered Reliability = 2
 )
 
 // SendOptions describes a single outgoing packet.

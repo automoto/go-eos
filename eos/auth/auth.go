@@ -11,15 +11,18 @@ import (
 	"github.com/mydev/go-eos/eos/types"
 )
 
+// Auth wraps the EOS Auth interface for Epic Account authentication.
 type Auth struct {
 	handle cbinding.EOS_HAuth
 	worker *threadworker.Worker
 }
 
+// New creates a new Auth instance from the given platform handle and worker.
 func New(handle cbinding.EOS_HAuth, worker *threadworker.Worker) *Auth {
 	return &Auth{handle: handle, worker: worker}
 }
 
+// LoginOptions configures an Auth login request.
 type LoginOptions struct {
 	CredentialType types.LoginCredentialType
 	ID             string
@@ -28,12 +31,14 @@ type LoginOptions struct {
 	ExternalType   types.ExternalCredentialType
 }
 
+// LoginResult holds the outcome of a successful Auth login.
 type LoginResult struct {
 	LocalUserId       types.EpicAccountId
 	SelectedAccountId types.EpicAccountId
 	PinGrantInfo      *PinGrantInfo
 }
 
+// PinGrantInfo contains device-code flow information for out-of-band user verification.
 type PinGrantInfo struct {
 	UserCode                string
 	VerificationURI         string
@@ -41,6 +46,7 @@ type PinGrantInfo struct {
 	VerificationURIComplete string
 }
 
+// Token represents an EOS Auth user access token and its metadata.
 type Token struct {
 	App              string
 	ClientId         string
@@ -54,12 +60,14 @@ type Token struct {
 	RefreshExpiresAt string
 }
 
+// LoginStatusChangedInfo is delivered when an Epic Account's login status changes.
 type LoginStatusChangedInfo struct {
 	LocalUserId   types.EpicAccountId
 	PrevStatus    types.LoginStatus
 	CurrentStatus types.LoginStatus
 }
 
+// Login authenticates via the EOS Auth interface. See EOS_Auth_Login.
 func (a *Auth) Login(ctx context.Context, opts LoginOptions) (*LoginResult, error) {
 	oneshot := callback.NewOneShot()
 
@@ -107,6 +115,7 @@ func (a *Auth) Login(ctx context.Context, opts LoginOptions) (*LoginResult, erro
 	return lr, nil
 }
 
+// Logout signs out the given Epic Account. See EOS_Auth_Logout.
 func (a *Auth) Logout(ctx context.Context, localUserId types.EpicAccountId) error {
 	oneshot := callback.NewOneShot()
 	cId := cbinding.EOS_EpicAccountId_FromString(string(localUserId))
@@ -132,6 +141,7 @@ func (a *Auth) Logout(ctx context.Context, localUserId types.EpicAccountId) erro
 	return nil
 }
 
+// DeletePersistentAuth removes locally stored persistent auth credentials. See EOS_Auth_DeletePersistentAuth.
 func (a *Auth) DeletePersistentAuth(ctx context.Context) error {
 	oneshot := callback.NewOneShot()
 
@@ -154,6 +164,7 @@ func (a *Auth) DeletePersistentAuth(ctx context.Context) error {
 	return nil
 }
 
+// GetLoggedInAccountsCount returns the number of currently logged-in accounts. See EOS_Auth_GetLoggedInAccountsCount.
 func (a *Auth) GetLoggedInAccountsCount() int {
 	var count int32
 	if err := a.worker.Submit(func() {
@@ -164,6 +175,7 @@ func (a *Auth) GetLoggedInAccountsCount() int {
 	return int(count)
 }
 
+// GetLoggedInAccountByIndex returns the EpicAccountId at the given index. See EOS_Auth_GetLoggedInAccountByIndex.
 func (a *Auth) GetLoggedInAccountByIndex(index int) types.EpicAccountId {
 	var result string
 	if err := a.worker.Submit(func() {
@@ -175,6 +187,7 @@ func (a *Auth) GetLoggedInAccountByIndex(index int) types.EpicAccountId {
 	return types.EpicAccountId(result)
 }
 
+// CopyIdToken returns the JWT ID token for the given account. See EOS_Auth_CopyIdToken.
 func (a *Auth) CopyIdToken(accountId types.EpicAccountId) (string, error) {
 	cId := cbinding.EOS_EpicAccountId_FromString(string(accountId))
 	var jwt string
@@ -191,6 +204,7 @@ func (a *Auth) CopyIdToken(accountId types.EpicAccountId) (string, error) {
 	return jwt, nil
 }
 
+// CopyUserAuthToken returns the access token for the given account. See EOS_Auth_CopyUserAuthToken.
 func (a *Auth) CopyUserAuthToken(localUserId types.EpicAccountId) (*Token, error) {
 	cId := cbinding.EOS_EpicAccountId_FromString(string(localUserId))
 	var token *cbinding.EOS_Auth_Token
@@ -223,6 +237,7 @@ func (a *Auth) CopyUserAuthToken(localUserId types.EpicAccountId) (*Token, error
 	}, nil
 }
 
+// AddNotifyLoginStatusChanged registers a callback for login status changes. See EOS_Auth_AddNotifyLoginStatusChanged.
 func (a *Auth) AddNotifyLoginStatusChanged(fn func(LoginStatusChangedInfo)) callback.RemoveNotifyFunc {
 	notifyFn := callback.NotifyFunc(func(data any) {
 		info := data.(*cbinding.EOS_Auth_LoginStatusChangedCallbackInfo)

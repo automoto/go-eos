@@ -10,15 +10,18 @@ import (
 	"github.com/mydev/go-eos/eos/types"
 )
 
+// Lobby wraps the EOS Lobby interface for matchmaking and lobby management.
 type Lobby struct {
 	handle cbinding.EOS_HLobby
 	worker *threadworker.Worker
 }
 
+// New creates a new Lobby instance from a platform lobby handle.
 func New(handle cbinding.EOS_HLobby, worker *threadworker.Worker) *Lobby {
 	return &Lobby{handle: handle, worker: worker}
 }
 
+// CreateLobbyOptions configures a new lobby creation request.
 type CreateLobbyOptions struct {
 	LocalUserId     types.ProductUserId
 	MaxMembers      uint32
@@ -27,6 +30,7 @@ type CreateLobbyOptions struct {
 	BucketId        string
 }
 
+// LobbyInfo contains metadata about a lobby instance.
 type LobbyInfo struct {
 	LobbyId          string
 	LobbyOwnerUserId types.ProductUserId
@@ -37,31 +41,32 @@ type LobbyInfo struct {
 	BucketId         string
 }
 
-// Notification info types
-
+// LobbyUpdateInfo is delivered when a lobby's attributes change.
 type LobbyUpdateInfo struct {
 	LobbyId string
 }
 
+// MemberUpdateInfo is delivered when a lobby member's attributes change.
 type MemberUpdateInfo struct {
 	LobbyId      string
 	TargetUserId types.ProductUserId
 }
 
+// MemberStatusInfo is delivered when a lobby member's status changes (join, leave, etc.).
 type MemberStatusInfo struct {
 	LobbyId       string
 	TargetUserId  types.ProductUserId
 	CurrentStatus MemberStatus
 }
 
+// InviteReceivedInfo is delivered when the local user receives a lobby invite.
 type InviteReceivedInfo struct {
 	InviteId     string
 	LocalUserId  types.ProductUserId
 	TargetUserId types.ProductUserId
 }
 
-// Core lifecycle
-
+// CreateLobby creates a new lobby and returns its ID. Wraps EOS_Lobby_CreateLobby.
 func (l *Lobby) CreateLobby(ctx context.Context, opts CreateLobbyOptions) (string, error) {
 	oneshot := callback.NewOneShot()
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(opts.LocalUserId))
@@ -90,6 +95,7 @@ func (l *Lobby) CreateLobby(ctx context.Context, opts CreateLobbyOptions) (strin
 	return info.LobbyId, nil
 }
 
+// DestroyLobby destroys an existing lobby. Wraps EOS_Lobby_DestroyLobby.
 func (l *Lobby) DestroyLobby(ctx context.Context, localUserId types.ProductUserId, lobbyId string) error {
 	oneshot := callback.NewOneShot()
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
@@ -115,6 +121,7 @@ func (l *Lobby) DestroyLobby(ctx context.Context, localUserId types.ProductUserI
 	return nil
 }
 
+// JoinLobby joins an existing lobby using the provided details handle. Wraps EOS_Lobby_JoinLobby.
 func (l *Lobby) JoinLobby(ctx context.Context, localUserId types.ProductUserId, details *LobbyDetails) error {
 	oneshot := callback.NewOneShot()
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
@@ -140,6 +147,7 @@ func (l *Lobby) JoinLobby(ctx context.Context, localUserId types.ProductUserId, 
 	return nil
 }
 
+// LeaveLobby leaves a lobby the local user has joined. Wraps EOS_Lobby_LeaveLobby.
 func (l *Lobby) LeaveLobby(ctx context.Context, localUserId types.ProductUserId, lobbyId string) error {
 	oneshot := callback.NewOneShot()
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
@@ -165,6 +173,7 @@ func (l *Lobby) LeaveLobby(ctx context.Context, localUserId types.ProductUserId,
 	return nil
 }
 
+// UpdateLobby applies a modification handle to an existing lobby. Wraps EOS_Lobby_UpdateLobby.
 func (l *Lobby) UpdateLobby(ctx context.Context, mod *LobbyModification) error {
 	oneshot := callback.NewOneShot()
 
@@ -188,8 +197,7 @@ func (l *Lobby) UpdateLobby(ctx context.Context, mod *LobbyModification) error {
 	return nil
 }
 
-// Modification
-
+// UpdateLobbyModification creates a modification handle for a lobby. Wraps EOS_Lobby_UpdateLobbyModification.
 func (l *Lobby) UpdateLobbyModification(localUserId types.ProductUserId, lobbyId string) (*LobbyModification, error) {
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
 	var mod cbinding.EOS_HLobbyModification
@@ -206,8 +214,7 @@ func (l *Lobby) UpdateLobbyModification(localUserId types.ProductUserId, lobbyId
 	return &LobbyModification{handle: mod, worker: l.worker}, nil
 }
 
-// Details
-
+// CopyLobbyDetailsHandle retrieves a details handle for a lobby. Wraps EOS_Lobby_CopyLobbyDetailsHandle.
 func (l *Lobby) CopyLobbyDetailsHandle(localUserId types.ProductUserId, lobbyId string) (*LobbyDetails, error) {
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
 	var details cbinding.EOS_HLobbyDetails
@@ -224,8 +231,7 @@ func (l *Lobby) CopyLobbyDetailsHandle(localUserId types.ProductUserId, lobbyId 
 	return &LobbyDetails{handle: details, worker: l.worker}, nil
 }
 
-// Search
-
+// CreateLobbySearch creates a lobby search handle. Wraps EOS_Lobby_CreateLobbySearch.
 func (l *Lobby) CreateLobbySearch(maxResults uint32) (*LobbySearch, error) {
 	var search cbinding.EOS_HLobbySearch
 	var result cbinding.EOS_EResult
@@ -241,8 +247,7 @@ func (l *Lobby) CreateLobbySearch(maxResults uint32) (*LobbySearch, error) {
 	return &LobbySearch{handle: search, worker: l.worker}, nil
 }
 
-// Invites
-
+// SendInvite sends a lobby invite to another user. Wraps EOS_Lobby_SendInvite.
 func (l *Lobby) SendInvite(ctx context.Context, lobbyId string, localUserId, targetUserId types.ProductUserId) error {
 	oneshot := callback.NewOneShot()
 	cLocal := cbinding.EOS_ProductUserId_FromString(string(localUserId))
@@ -270,6 +275,7 @@ func (l *Lobby) SendInvite(ctx context.Context, lobbyId string, localUserId, tar
 	return nil
 }
 
+// GetInviteCount returns the number of pending lobby invites for the local user.
 func (l *Lobby) GetInviteCount(localUserId types.ProductUserId) uint32 {
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
 	var count uint32
@@ -281,6 +287,7 @@ func (l *Lobby) GetInviteCount(localUserId types.ProductUserId) uint32 {
 	return count
 }
 
+// GetInviteIdByIndex returns the invite ID at the given index for the local user.
 func (l *Lobby) GetInviteIdByIndex(localUserId types.ProductUserId, index uint32) (string, error) {
 	cUserId := cbinding.EOS_ProductUserId_FromString(string(localUserId))
 	var id string
@@ -297,8 +304,7 @@ func (l *Lobby) GetInviteIdByIndex(localUserId types.ProductUserId, index uint32
 	return id, nil
 }
 
-// Notifications
-
+// AddNotifyLobbyUpdateReceived registers a callback for lobby attribute changes.
 func (l *Lobby) AddNotifyLobbyUpdateReceived(fn func(LobbyUpdateInfo)) callback.RemoveNotifyFunc {
 	notifyFn := callback.NotifyFunc(func(data any) {
 		info := data.(*cbinding.EOS_Lobby_LobbyUpdateReceivedCallbackInfo)
@@ -318,6 +324,7 @@ func (l *Lobby) AddNotifyLobbyUpdateReceived(fn func(LobbyUpdateInfo)) callback.
 	}
 }
 
+// AddNotifyLobbyMemberUpdateReceived registers a callback for lobby member attribute changes.
 func (l *Lobby) AddNotifyLobbyMemberUpdateReceived(fn func(MemberUpdateInfo)) callback.RemoveNotifyFunc {
 	notifyFn := callback.NotifyFunc(func(data any) {
 		info := data.(*cbinding.EOS_Lobby_LobbyMemberUpdateReceivedCallbackInfo)
@@ -340,6 +347,7 @@ func (l *Lobby) AddNotifyLobbyMemberUpdateReceived(fn func(MemberUpdateInfo)) ca
 	}
 }
 
+// AddNotifyLobbyMemberStatusReceived registers a callback for lobby member status changes.
 func (l *Lobby) AddNotifyLobbyMemberStatusReceived(fn func(MemberStatusInfo)) callback.RemoveNotifyFunc {
 	notifyFn := callback.NotifyFunc(func(data any) {
 		info := data.(*cbinding.EOS_Lobby_LobbyMemberStatusReceivedCallbackInfo)

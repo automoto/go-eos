@@ -81,6 +81,19 @@ The `.c` files use `#ifdef EOS_CGO` guards and `//go:build !eosstub` constraints
 - **Table-based tests**: use where appropriate to keep tests concise
 - **Test names**: describe behavior, e.g. `Test_login_should_succeed_with_developer_credentials`
 
+## CI and Cross-Platform Testing
+
+CI runs on **Linux only** to keep runner costs down. The CI pipeline runs:
+
+- `make build` — full Cgo build
+- `make lint` — golangci-lint
+- `make test-webapi` — pure Go webapi tests
+- `go vet ./...`
+
+macOS and Windows testing is done manually before releases. The `webapi/` tests are pure Go and should pass on all platforms with `CGO_ENABLED=0`.
+
+On-demand macOS/Windows CI jobs can be triggered via `workflow_dispatch` for pre-release validation.
+
 ## Code Quality
 
 - Run `make lint` before submitting (must pass with zero issues)

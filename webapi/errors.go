@@ -14,6 +14,7 @@ type APIError struct {
 	Message    string
 }
 
+// Error returns a human-readable representation of the API error.
 func (e *APIError) Error() string {
 	if e.ErrorCode != "" {
 		return fmt.Sprintf("webapi: HTTP %d: %s: %s", e.HTTPStatus, e.ErrorCode, e.Message)
@@ -35,12 +36,18 @@ func (e *APIError) Is(target error) bool {
 	return e.HTTPStatus == t.HTTPStatus && e.ErrorCode == t.ErrorCode
 }
 
+// Sentinel errors for common HTTP status codes. Use errors.Is to match.
 var (
+	// ErrUnauthorized indicates a 401 Unauthorized response.
 	ErrUnauthorized = &APIError{HTTPStatus: 401}
-	ErrForbidden    = &APIError{HTTPStatus: 403}
-	ErrNotFound     = &APIError{HTTPStatus: 404}
-	ErrRateLimited  = &APIError{HTTPStatus: 429}
-	ErrServerError  = &APIError{HTTPStatus: 500}
+	// ErrForbidden indicates a 403 Forbidden response.
+	ErrForbidden = &APIError{HTTPStatus: 403}
+	// ErrNotFound indicates a 404 Not Found response.
+	ErrNotFound = &APIError{HTTPStatus: 404}
+	// ErrRateLimited indicates a 429 Too Many Requests response.
+	ErrRateLimited = &APIError{HTTPStatus: 429}
+	// ErrServerError indicates a 500 Internal Server Error response.
+	ErrServerError = &APIError{HTTPStatus: 500}
 )
 
 type errorBody struct {
